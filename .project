@@ -3,6 +3,9 @@
 	<name>ArduinoExample</name>
 	<comment></comment>
 	<projects>
+		<project>ArduinoCore</project>
+		<project>ArduinoLibs</project>
+		<project>ArduinoTools</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
