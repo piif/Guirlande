@@ -4,8 +4,8 @@
 	<comment></comment>
 	<projects>
 		<project>ArduinoCore</project>
-		<project>ArduinoLibs</project>
 		<project>ArduinoTools</project>
+		<project>ArduinoLibs</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
