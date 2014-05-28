@@ -240,9 +240,9 @@
 							<tool id="de.innot.avreclipse.tool.linker.winavr.app.release.1934392594" name="AVR C Linker" superClass="de.innot.avreclipse.tool.linker.winavr.app.release"/>
 							<tool id="de.innot.avreclipse.tool.cpplinker.app.release.1994746895" name="AVR C++ Linker" superClass="de.innot.avreclipse.tool.cpplinker.app.release">
 								<option id="de.innot.avreclipse.cpplinker.option.libs.50825882" name="Libraries (-l)" superClass="de.innot.avreclipse.cpplinker.option.libs" valueType="libs">
-									<listOptionValue builtIn="false" value="ArduinoCore"/>
-									<listOptionValue builtIn="false" value="ArduinoLibs"/>
 									<listOptionValue builtIn="false" value="ArduinoTools"/>
+									<listOptionValue builtIn="false" value="ArduinoLibs"/>
+									<listOptionValue builtIn="false" value="ArduinoCore"/>
 								</option>
 								<option id="de.innot.avreclipse.cpplinker.option.libpath.320155258" name="Libraries Path (-L)" superClass="de.innot.avreclipse.cpplinker.option.libpath" valueType="stringList">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ArduinoCore/${ConfigName}}&quot;"/>
