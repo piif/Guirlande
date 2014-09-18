@@ -24,43 +24,132 @@ void setup(void) {
 	Serial.println("ready");
 	stripInit(STRIP_LEN, STRIP_PIN);
 	stripUpdate(); // Initialize all pixels to 'off'
-	for(int i = 0; i < STRIP_LEN; i++) {
-		stripSetRGB(i, 255, 255, 255);
-	}
-	Serial.println("white");Serial.flush();
-	stripUpdate();
-	delay(5000);
-	for(int i = 0; i < STRIP_LEN; i++) {
-		stripSetRGB(i, 0, 0, 0);
-	}
-	Serial.println("black");Serial.flush();
-	stripUpdate();
-	delay(3000);
-	for(int i = 0; i < STRIP_LEN; i++) {
-		stripSetRGB(i, 255, 255, 255);
-	}
-	Serial.println("white");Serial.flush();
-	stripUpdate();
-	delay(5000);
+
+//	for(int i = 0; i < STRIP_LEN; i++) {
+//		stripSetRGB(i, 255, 255, 255);
+//	}
+//	Serial.println("white");Serial.flush();
+//	stripUpdate();
+//	delay(5000);
+//	for(int i = 0; i < STRIP_LEN; i++) {
+//		stripSetRGB(i, 0, 0, 0);
+//	}
+//	Serial.println("black");Serial.flush();
+//	stripUpdate();
+//	delay(3000);
+//	for(int i = 0; i < STRIP_LEN; i++) {
+//		stripSetRGB(i, 255, 255, 255);
+//	}
+//	Serial.println("white");Serial.flush();
+//	stripUpdate();
+//	delay(5000);
+
 	Serial.println("loop");Serial.flush();
 }
 
-bool flag = HIGH;
-Color color = { 0, };
-byte position = 0;
-
-void loop() {
-	stripSetColor(position, color);
-	stripUpdate();
-	position++;
+void effectOnOff(int step) {
+	static bool flag = HIGH;
+	static byte h = 0;
+	static byte position = 0;
+	if (flag) {
+		stripSetH(position, h);
+		h = (h + 3) % 256;
+	} else {
+		stripSetH(position, 0);
+	}
+    stripUpdate();
+    position++;
 	if (position == STRIP_LEN) {
 		position = 0;
 		flag = flag ? LOW : HIGH;
-		if (flag) {
-			color.r = 255;
+	}
+	delay(5);
+
+}
+
+void effectScroll(int step) {
+	byte first = stripGetH(0);
+	for (int i = 1; i < STRIP_LEN; i++) {
+		stripSetH(i - 1, stripGetH(i));
+	}
+	stripSetH(STRIP_LEN - 1, first);
+    stripUpdate();
+
+	delay(25);
+}
+
+void effectPeaks(int step) {
+	static int peak = STRIP_LEN / 7;
+	static byte h = 3;
+
+	for (int i = peak - 9; i < peak + 9; i++) {
+		if (i < 0 || i > STRIP_LEN) {
+			continue;
+		}
+		byte level = 9 - abs(9 - (step % 19));
+		byte dist = abs(peak - i);
+		if (level == 0) {
+			stripSetH(i, 0);
 		} else {
-			color.r = 0;
+			stripSetHL(i, h, (10 - dist) * level * 2);
 		}
 	}
-//	delay(5);
+	if (step % 19 == 18) {
+		peak = (peak + 17) % STRIP_LEN;
+		h = (h + 13) % 255 + 1;
+	}
+    stripUpdate();
+	delay(25);
+}
+
+void effectShade(int step) {
+	static byte h = 17;
+
+	for(byte i = 0; i < STRIP_LEN; i++) {
+		stripSetHL(i, h, (i+1) * 3);
+	}
+
+    stripUpdate();
+	h = h * 4;
+	delay(25);
+}
+
+typedef void (*EffectCallback)(int);
+
+typedef struct _effect {
+	unsigned int nbSteps;
+	EffectCallback func;
+} Effect;
+
+Effect effects[] = {
+	{
+		nbSteps: 19 * 10,
+		func: effectPeaks
+//	}, {
+//		nbSteps: 1,
+//		func: effectShade
+//	}, {
+//		nbSteps: 5 * 60,
+//		func: effectScroll
+	}, {
+		nbSteps: 9 * 60,
+		func: effectOnOff
+	}, {
+		nbSteps: 5 * 60,
+		func: effectScroll
+	}
+};
+
+unsigned int effect = 0, step = 0;
+
+void loop() {
+	if (step >= effects[effect].nbSteps) {
+		step = 0;
+		effect++;
+		if (effect >= sizeof(effects)) {
+			effect = 0;
+		}
+	}
+	effects[effect].func(step);
+	step++;
 }

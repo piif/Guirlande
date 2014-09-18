@@ -1,6 +1,7 @@
 #define FROM_STRIP_C
 #include "strip.h"
 
+Color *strip;
 byte *raw;
 int rawLen;
 
@@ -11,8 +12,13 @@ void stripInit(int len, byte pin) {
 	port = portOutputRegister(digitalPinToPort(pin));
 	pinMask = digitalPinToBitMask(pin);
 
-	raw = (byte *)strip;
 	rawLen = len * 3;
+	raw = (byte *)malloc(rawLen);
+    memset(raw, 0, rawLen);
+	strip = (Color *)raw;
+
+	pinMode(pin, OUTPUT);
+	digitalWrite(pin, LOW);
 }
 
 void stripSetRGB(int position, byte r, byte g, byte b) {
@@ -40,18 +46,6 @@ byte stripGetH(int position) {
 
 // TODO : compare to http://fr.wikipedia.org/wiki/Cercle_chromatique
 
-void HtoRGB(byte h, Color *c) {
-	if(h == 0) {
-		c->r = 0; c->g = 0; c->b = 0;
-	} else if (h <= 85) {
-		c->r = h*3; c->g = 255 - h*3; c->b = 0;
-	} else if (h <= 170) {
-		c->r = 255 - h*3; c->g = 0; c->b = h*3;
-	} else {
-		c->r = 0; c->g = h*3; c->b = 255 - h*3;
-	}
-}
-
 void HLtoRGB(byte h, byte l, Color *c) {
 	if(h == 0) {
 		c->r = 0; c->g = 0; c->b = 0;
@@ -70,8 +64,36 @@ void HLtoRGB(byte h, byte l, Color *c) {
 	}
 }
 
+void HtoRGB(byte h, Color *c) {
+	if(h == 0) {
+		c->r = 0; c->g = 0; c->b = 0;
+	} else if (h <= 85) {
+		c->r = h*3; c->g = 255 - h*3; c->b = 0;
+	} else if (h <= 170) {
+		h -= 85;
+		c->r = 255 - h*3; c->g = 0; c->b = h*3;
+	} else {
+		h -= 170;
+		c->r = 0; c->g = h*3; c->b = 255 - h*3;
+	}
+}
+
 byte RGBtoH(Color c) {
-	return 0;
+	if (c.r == 0) {
+		if (c.g == 0) {
+			if (c.b == 0) {
+				return 0;
+			} else {
+				return 170;
+			}
+		} else {
+			return c.g / 3 + 170;
+		}
+	} else if (c.g == 0) {
+		return c.b / 3 + 85;
+	} else {
+		return c.r / 3;
+	}
 }
 
 long endTime = 0;
@@ -344,4 +366,6 @@ void stripUpdate() {
  #error "CPU SPEED NOT SUPPORTED"
 #endif
 
+	interrupts();
+	endTime = micros(); // Save EOD time for latch on next call
 }

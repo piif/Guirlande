@@ -33,8 +33,4 @@ void HtoRGB(byte h, Color *c);
 void HLtoRGB(byte h, byte l, Color *c);
 byte RGBtoH(Color c);
 
-#ifdef FROM_STRIP_C
-extern Color strip[];
-#else
-Color strip[STRIP_LEN];
-#endif
+extern Color *strip;

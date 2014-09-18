@@ -20,13 +20,16 @@ export WITH_PRINT_SIZE := yes
 
 export UPLOAD_DEVICE := /dev/ttyACM0
 
-#export MAIN_SOURCE := ${PROJECT_DIR}main.cpp
-export USER_CFLAGS := -I../../Adafruit_NeoPixel
-export MAIN_SOURCE := Guirlande.ino
-#C_SOURCES := $(shell find . -name examples -prune , -name "*.c" -o -name "*.cpp")
+## Version 2
+export MAIN_SOURCE := Guirlande2.ino
+C_SOURCES := $(shell find . -name examples -prune , -name "*.c" -o -name "*.cpp")
 
-export ALL_SOURCES := ${MAIN_SOURCE} ${C_SOURCES} $(abspath ../../Adafruit_NeoPixel/Adafruit_NeoPixel.cpp)
- 
+## Version 1
+#export USER_CFLAGS := -I../../Adafruit_NeoPixel
+#export MAIN_SOURCE := Guirlande.ino
+#C_SOURCES := $(abspath ../../Adafruit_NeoPixel/Adafruit_NeoPixel.cpp)
+
+export ALL_SOURCES := ${MAIN_SOURCE} ${C_SOURCES}
 # call lib.makefile for a utilities library or bin.makefile for a program
 all upload console:
 	${MAKE} -f ${CORE_DIR}etc/bin.makefile $@
