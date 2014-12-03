@@ -6,7 +6,7 @@ export PROJECT_DIR := $(dir $(realpath ${MAKEFILE_LIST}))
 CORE_DIR := ${PROJECT_DIR}../ArduinoCore/
 
 # other arduino librairies project pathes this project depends on
-export DEPENDENCIES :=
+export DEPENDENCIES := ${CORE_DIR}../ArduinoTools/
 # ${CORE_DIR}../ArduinoLibs/ ${CORE_DIR}../ArduinoTools/
 
 # generate assembler source code also
@@ -21,8 +21,8 @@ export WITH_PRINT_SIZE := yes
 export UPLOAD_DEVICE := /dev/ttyACM0
 
 ## Version 2
-export MAIN_SOURCE := Guirlande2.ino
-C_SOURCES := $(shell find . -name examples -prune , -name "*.c" -o -name "*.cpp")
+#export MAIN_SOURCE := Guirlande2.ino
+C_SOURCES := $(shell find . -name examples -prune , -name "*.c" -o -name "*.cpp" -o -name "*.ino")
 
 ## Version 1
 #export USER_CFLAGS := -I../../Adafruit_NeoPixel
