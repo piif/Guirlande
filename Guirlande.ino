@@ -16,6 +16,10 @@
 #define STRIP_PIN A0
 #define STRIP_LEN 60
 
+// PWM'able pins
+const byte linePins[6] = { 3, 5, 6, 9, 10, 11 };
+const byte lineGround = 8;
+
 void usage() {
 	Serial.println("? => this help");
 	Serial.println("+ => light on");
@@ -31,8 +35,61 @@ void setup(void) {
 	stripInit(STRIP_LEN, STRIP_PIN);
 	stripUpdate(); // Initialize all pixels to 'off'
 
+	for (byte i = 0; i < 6; i++) {
+		pinMode(linePins[i], OUTPUT);
+		digitalWrite(linePins[i], HIGH); // led gnd => HIGH = off
+	}
+	pinMode(lineGround, OUTPUT);
+	digitalWrite(lineGround, HIGH); // led gnd => HIGH = on
+
 	usage();
 	Serial.println("ready"); Serial.flush();
+}
+
+byte line[6] = { 0, };
+
+void lineOff() {
+	for (byte i = 0; i < 6; i++) {
+		digitalWrite(linePins[i], HIGH);
+	}
+}
+
+void lineUpdate() {
+	for (byte i = 0; i < 6; i++) {
+		analogWrite(linePins[i], ~(line[i]));
+	}
+}
+
+unsigned long rotate6_1(int step) {
+	line[step % 6] = 0;
+	line[(step+1) % 6] = 255;
+    lineUpdate();
+
+	return 50;
+}
+unsigned long rotate6_2(int step) {
+	if (step == 0) {
+		line[0] = line[1] = 255;
+	} else {
+		line[(step+5) % 6] = 0;
+		line[(step+1) % 6] = 255;
+	}
+    lineUpdate();
+
+	return 50;
+}
+unsigned long fade6_3(int step) {
+	if (step == 0) {
+		line[0] = line[1] = 255;
+	} else {
+		byte light = step % 256;
+		byte rank = step / 256;
+		line[(rank+5) % 6] = ~light;
+		line[(rank+1) % 6] = light;
+	}
+    lineUpdate();
+
+	return 2;
 }
 
 unsigned long effectOnOff(int step) {
@@ -125,7 +182,22 @@ typedef struct _effect {
 	EffectCallback func;
 } Effect;
 
-Effect effects[] = {
+Effect effectsA[] = {
+	{
+		nbSteps: 256 * 5 * 6,
+		func: fade6_3
+	},
+	{
+		nbSteps: 6 * 20,
+		func: rotate6_1
+	},
+	{
+		nbSteps: 6 * 20,
+		func: rotate6_2
+	}
+};
+
+Effect effectsB[] = {
 	{
 		nbSteps: 4,
 		func: effectAll
@@ -147,10 +219,14 @@ Effect effects[] = {
 		func: effectOnOff
 	}
 };
-const unsigned int nbEffects = sizeof(effects) / sizeof(Effect);
+const unsigned int nbEffectsA = sizeof(effectsA) / sizeof(Effect);
+unsigned int effectA = 0, stepA = 0, nextA = 0;
+int forcedA = -1;
 
-unsigned int effect = 0, step = 0, next = 0;
-int forced = -1;
+const unsigned int nbEffectsB = sizeof(effectsB) / sizeof(Effect);
+unsigned int effectB = 0, stepB = 0, nextB = 0;
+int forcedB = -1;
+
 bool off = false;
 
 void loop() {
@@ -159,38 +235,63 @@ void loop() {
 		if (b == '-') {
 			off = true;
 			stripOff();
+			digitalWrite(8, LOW);
 		} else if (b == '+') {
+			digitalWrite(8, HIGH);
 			off = false;
-			step = effect = 0;
+			stepA = effectA = 0;
 		} else if (b >= '0' && b <= '9') {
-			forced = (b - '0') % nbEffects;
-			effect = forced;
-			step = 0;
+			forcedA = (b - '0') % nbEffectsA;
+			effectA = forcedA;
+			stepA = 0;
+		} else if (b >= 'A' && b <= 'Z') {
+			forcedB = (b - 'A') % nbEffectsB;
+			effectB = forcedB;
+			stepA = 0;
 		} else if (b == '.') {
-			forced = -1;
+			forcedA = -1;
+			forcedB = -1;
 		} else if (b == '?') {
 			usage();
 		}
 	}
 
 	if (!off) {
-		if (next == 0) {
-			if (step >= effects[effect].nbSteps) {
-				step = 0;
-				if (forced == -1) {
-					effect++;
-					if (effect >= nbEffects) {
-						effect = 0;
+		if (nextA == 0) {
+			if (stepA >= effectsA[effectA].nbSteps) {
+				stepA = 0;
+				if (forcedA == -1) {
+					effectA++;
+					if (effectA >= nbEffectsA) {
+						effectA = 0;
 					}
 				}
 			}
-			if (step == 0) {
+			if (stepA == 0) {
+				lineOff();
+			}
+			nextA = effectsA[effectA].func(stepA);
+			stepA++;
+		}
+		nextA--;
+
+		if (nextB == 0) {
+			if (stepB >= effectsB[effectB].nbSteps) {
+				stepB = 0;
+				if (forcedB == -1) {
+					effectB++;
+					if (effectB >= nbEffectsB) {
+						effectB = 0;
+					}
+				}
+			}
+			if (stepB == 0) {
 				stripOff();
 			}
-			next = effects[effect].func(step);
-			step++;
+			nextB = effectsB[effectB].func(stepB);
+			stepB++;
 		}
-		next--;
+		nextB--;
 	}
 	delay(1);
 }
