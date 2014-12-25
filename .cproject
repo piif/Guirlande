@@ -49,6 +49,7 @@
 								<option id="de.innot.avreclipse.cppcompiler.option.def.34785682" name="Define Syms (-D)" superClass="de.innot.avreclipse.cppcompiler.option.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="ARDUINO=105"/>
 									<listOptionValue builtIn="false" value="NO_ARDUINO_IDE=1"/>
+									<listOptionValue builtIn="false" value="__cplusplus=201103L"/>
 								</option>
 								<option id="de.innot.avreclipse.cppcompiler.option.incpath.535518169" name="Include Paths (-I)" superClass="de.innot.avreclipse.cppcompiler.option.incpath" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
@@ -57,6 +58,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ArduinoLibs}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ArduinoTools}&quot;"/>
 								</option>
+								<option id="de.innot.avreclipse.cppcompiler.option.undef.503304674" name="Undefine Syms (-U)" superClass="de.innot.avreclipse.cppcompiler.option.undef" valueType="undefDefinedSymbols"/>
 								<inputType id="de.innot.avreclipse.cppcompiler.input.1945111689" superClass="de.innot.avreclipse.cppcompiler.input"/>
 							</tool>
 							<tool id="de.innot.avreclipse.tool.linker.winavr.app.release.1379142603" name="AVR C Linker" superClass="de.innot.avreclipse.tool.linker.winavr.app.release"/>
@@ -140,6 +142,7 @@
 									<listOptionValue builtIn="false" value="USB_VID=0x2341"/>
 									<listOptionValue builtIn="false" value="USB_PID=0x8037"/>
 									<listOptionValue builtIn="false" value="NO_ARDUINO_IDE=1"/>
+									<listOptionValue builtIn="false" value="__cplusplus=201103L"/>
 								</option>
 								<option id="de.innot.avreclipse.cppcompiler.option.incpath.900660698" name="Include Paths (-I)" superClass="de.innot.avreclipse.cppcompiler.option.incpath" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
@@ -227,6 +230,7 @@
 								<option id="de.innot.avreclipse.cppcompiler.option.def.1788013944" name="Define Syms (-D)" superClass="de.innot.avreclipse.cppcompiler.option.def" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="ARDUINO=105"/>
 									<listOptionValue builtIn="false" value="NO_ARDUINO_IDE=1"/>
+									<listOptionValue builtIn="false" value="__cplusplus=201103L"/>
 								</option>
 								<option id="de.innot.avreclipse.cppcompiler.option.incpath.1248433488" name="Include Paths (-I)" superClass="de.innot.avreclipse.cppcompiler.option.incpath" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
@@ -318,6 +322,7 @@
 									<listOptionValue builtIn="false" value="USB_VID=0x2341"/>
 									<listOptionValue builtIn="false" value="USB_PID=0x8041"/>
 									<listOptionValue builtIn="false" value="NO_ARDUINO_IDE=1"/>
+									<listOptionValue builtIn="false" value="__cplusplus=201103L"/>
 								</option>
 								<option id="de.innot.avreclipse.cppcompiler.option.incpath.1024904548" name="Include Paths (-I)" superClass="de.innot.avreclipse.cppcompiler.option.incpath" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}}&quot;"/>
@@ -330,7 +335,7 @@
 							</tool>
 							<tool id="de.innot.avreclipse.tool.linker.winavr.app.release.602993274" name="AVR C Linker" superClass="de.innot.avreclipse.tool.linker.winavr.app.release"/>
 							<tool id="de.innot.avreclipse.tool.cpplinker.app.release.2059997151" name="AVR C++ Linker" superClass="de.innot.avreclipse.tool.cpplinker.app.release">
-								<option id="de.innot.avreclipse.cpplinker.option.libs.2130870323" name="Libraries (-l)" superClass="de.innot.avreclipse.cpplinker.option.libs" valueType="libs"/>
+								<option id="de.innot.avreclipse.cpplinker.option.libs.2130870323" name="Libraries (-l)" superClass="de.innot.avreclipse.cpplinker.option.libs"/>
 								<option id="de.innot.avreclipse.cpplinker.option.libpath.625890998" name="Libraries Path (-L)" superClass="de.innot.avreclipse.cpplinker.option.libpath" valueType="stringList">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ArduinoCore/target/${ConfigName}}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/ArduinoLibs/target/${ConfigName}}&quot;"/>
