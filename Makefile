@@ -25,6 +25,8 @@ export UPLOAD_DEVICE := /dev/ttyACM0
 
 C_SOURCES := $(shell find . -name examples -prune , -name "*.c" -o -name "*.cpp" -o -name "*.ino")
 
+export STANDARD := -std=c++11
+
 # call lib.makefile for a utilities library or bin.makefile for a program
 all upload console:
 	${MAKE} -f ${CORE_DIR}etc/bin.makefile $@
