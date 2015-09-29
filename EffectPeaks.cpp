@@ -1,9 +1,7 @@
 #include <Guirlande.h>
 #include <Animation.h>
 
-//package piif.guirlande;
-
-class EffectPeaks implements Animation {
+class EffectPeaks : public Animation {
 	int peak;
 	byte h;
 	int nbPeaks;
@@ -37,4 +35,5 @@ class EffectPeaks implements Animation {
 		}
 		return 25;
 	}
+	virtual ~EffectPeaks() {};
 };

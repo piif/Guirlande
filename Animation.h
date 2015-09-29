@@ -3,12 +3,17 @@
 
 class Animation {
 public:
-	long doStep(int step) {};
-//	virtual ~Animation() = 0;
-};
+	// execute step of animation
+	// returns number of milliseconds to wait before next call
+	virtual long doStep(long step) {
+		Serial.println("doStep virtual !!");
+		return 0;
+	};
 
-// to override java syntax
-#define implements : public
-//#define public
+	virtual void status() {
+		Serial.println("status virtual !!");
+	};
+	virtual ~Animation() {};
+};
 
 #endif

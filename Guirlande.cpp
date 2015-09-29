@@ -17,7 +17,8 @@ void usage() {
 	Serial.println("? => this help");
 	Serial.println("+ => light on");
 	Serial.println("- => light off");
-	Serial.println("0..9 => force to loop on this effect");
+	Serial.println("0..9 => force to loop on this line effect");
+	Serial.println("A..Z => force to loop on this strip effect");
 	Serial.println(". => iterate on effects");
 	Serial.flush();
 }
@@ -49,12 +50,12 @@ void lineOff() {
 
 void lineUpdate() {
 	for (byte i = 0; i < 6; i++) {
-		analogWrite(linePins[i], (line[i]));
+		analogWrite(linePins[i], line[i]);
 	}
 }
 
 class rotate6_1: public Animation {
-	long doStep(int step) {
+	long doStep(long step) {
 		if (step == 6 * 20) {
 			return -1;
 		}
@@ -64,9 +65,10 @@ class rotate6_1: public Animation {
 
 		return 50;
 	}
+	virtual ~rotate6_1() {};
 };
 class rotate6_2: public Animation {
-	long doStep(int step) {
+	long doStep(long step) {
 		if (step == 0) {
 			line[0] = line[1] = 255;
 		} else if (step == 6 * 20) {
@@ -79,10 +81,11 @@ class rotate6_2: public Animation {
 
 		return 50;
 	}
+	virtual ~rotate6_2() {};
 };
 
 class fade6_3: public Animation {
-	long doStep(int step) {
+	long doStep(long step) {
 		if (step == 0) {
 			line[0] = line[1] = 255;
 		} else if (step == 256 * 5 * 6) {
@@ -97,9 +100,10 @@ class fade6_3: public Animation {
 
 		return 2;
 	}
+	virtual ~fade6_3() {};
 };
 
-Animation* effectsA[] = {
+Animation* effectsLine[] = {
 //	nbSteps: 256 * 5 * 6,
 	new fade6_3(),
 //	nbSteps: 6 * 20,
@@ -108,7 +112,7 @@ Animation* effectsA[] = {
 	new rotate6_2()
 };
 
-Animation* effectsB[] = {
+Animation* effectsStrip[] = {
 	new EffectAll(),
 	new EffectStack(),
 	new EffectRomain(),
@@ -119,17 +123,32 @@ Animation* effectsB[] = {
 	new EffectOnOff()
 };
 
-const unsigned int nbEffectsA = sizeof(effectsA) / sizeof(Animation*);
-unsigned int effectA = 0, stepA = 0;
-int nextA = 0;
-int forcedA = -1;
+const unsigned int nbEffectsLine = sizeof(effectsLine) / sizeof(Animation*);
+int effectLine = 0, forcedLine = -1;
+unsigned long stepLine = 0;
+long delayLine = 0;
 
-const unsigned int nbEffectsB = sizeof(effectsB) / sizeof(Animation*);
-unsigned int effectB = 0, stepB = 0;
-int nextB = 0;
-int forcedB = -1;
+const unsigned int nbEffectsStrip = sizeof(effectsStrip) / sizeof(Animation*);
+int effectStrip = 0, forcedStrip = -1;
+unsigned long stepStrip = 0;
+long delayStrip = 0;
 
 bool off = false;
+
+void status() {
+	Serial.print("Status "); Serial.println(off ? "off" : "on");
+	if (off) {
+		return;
+	}
+	Serial.print("Line : anim "); Serial.print(effectLine);
+	Serial.print(" step "); Serial.println(stepLine);
+	Serial.print(" "); effectsLine[effectLine]->status();
+	Serial.println();
+	Serial.print("Strip : anim "); Serial.print(effectStrip);
+	Serial.print(" step "); Serial.println(stepStrip);
+	Serial.print(" "); effectsStrip[effectStrip]->status();
+	Serial.println();
+}
 
 void loop() {
 	if (Serial.available()) {
@@ -141,64 +160,67 @@ void loop() {
 		} else if (b == '+') {
 			digitalWrite(8, HIGH);
 			off = false;
-			stepA = effectA = 0;
+			stepLine = effectLine = 0;
+			effectStrip = stepStrip = 0;
 		} else if (b >= '0' && b <= '9') {
-			forcedA = (b - '0') % nbEffectsA;
-			effectA = forcedA;
-			stepA = 0;
+			forcedLine = (b - '0') % nbEffectsLine;
+			effectLine = forcedLine;
+			stepLine = 0;
 		} else if (b >= 'A' && b <= 'Z') {
-			forcedB = (b - 'A') % nbEffectsB;
-			effectB = forcedB;
-			stepB = 0;
+			forcedStrip = (b - 'A') % nbEffectsStrip;
+			effectStrip = forcedStrip;
+			stepStrip = 0;
 		} else if (b == '.') {
-			forcedA = -1;
-			forcedB = -1;
+			forcedLine = -1;
+			forcedStrip = -1;
 		} else if (b == '?') {
 			usage();
+			status();
 		}
 	}
 
 	if (!off) {
-		if (nextA == 0) {
-			if (stepA == 0) {
+		if (delayLine == 0) {
+			if (stepLine == 0) {
 				lineOff();
 			}
-			nextA = effectsA[effectA]->doStep(stepA);
-			if (nextA == -1) {
-				stepA = 0;
-				if (forcedA == -1) {
-					effectA++;
-					if (effectA >= nbEffectsA) {
-						effectA = 0;
+			delayLine = effectsLine[effectLine]->doStep(stepLine);
+			if (delayLine == -1) {
+				stepLine = 0;
+				if (forcedLine == -1) {
+					effectLine++;
+					if (effectLine >= nbEffectsLine) {
+						effectLine = 0;
 					}
 				}
-				nextA = 0;
+				delayLine = 0;
 			} else {
-				stepA++;
+				stepLine++;
 			}
 		} else {
-			nextA--;
+			delayLine--;
 		}
 
-		if (nextB == 0) {
-			if (stepB == 0) {
+		if (delayStrip > 0) {
+			// wait for next iteration
+			delayStrip--;
+		} else {
+			if (stepStrip == 0) {
 				stripOff();
 			}
-			nextB = effectsB[effectB]->doStep(stepB);
-			if (nextB == -1) {
-				stepB = 0;
-				if (forcedB == -1) {
-					effectB++;
-					if (effectB >= nbEffectsB) {
-						effectB = 0;
+			delayStrip = effectsStrip[effectStrip]->doStep(stepStrip);
+			if (delayStrip < 0) {
+				delayStrip = 0;
+				stepStrip = 0;
+				if (forcedStrip == -1) {
+					effectStrip++;
+					if (effectStrip >= nbEffectsStrip) {
+						effectStrip = 0;
 					}
 				}
-				nextB = 0;
 			} else {
-				stepB++;
+				stepStrip++;
 			}
-		} else {
-			nextB--;
 		}
 	}
 	delay(1);

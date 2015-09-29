@@ -1,18 +1,14 @@
 #include "Guirlande.h"
 #include "Animation.h"
 
-//package piif.guirlande;
-//
-//import static piif.guirlande.Guirlande.*;
-//import static piif.guirlande.Color.*;
+class EffectOnOff : public Animation {
 
-class EffectOnOff implements Animation {
-
-	static boolean flag;
-	static int h;
-	static byte position;
+	boolean flag;
+	int h;
+	byte position;
 
 	long doStep(long step) {
+
 		if (step == 0) {
 			flag = HIGH;
 			h = 1;
@@ -38,4 +34,5 @@ class EffectOnOff implements Animation {
 		}
 		return 5;
 	}
+	virtual ~EffectOnOff() {};
 };

@@ -1,41 +1,21 @@
-# the directory this project is in
-# must be defined for generic makefile to work
-export PROJECT_DIR := $(dir $(realpath ${MAKEFILE_LIST}))
+# ARDDUDE_DIR is defined by eclipse CDT config
+$(info ARDDUDE_DIR=${ARDDUDE_DIR})
 
-# to define to ArduinoCore root directory 
-CORE_DIR := ${PROJECT_DIR}../ArduinoCore/
+all: bin
 
-# other arduino librairies project pathes this project depends on
-export DEPENDENCIES := ${CORE_DIR} ${CORE_DIR}../ArduinoLibs/ ${CORE_DIR}../ArduinoTools/
+include ${ARDDUDE_DIR}/etc/tools.mk
 
-# generate assembler source code also
-export WITH_ASSEMBLY := yes
+CALLER_DIR := $(call truepath,$(dir $(firstword ${MAKEFILE_LIST})))
+$(info CALLER_DIR = ${CALLER_DIR})
 
-# generate eeprom image
-export WITH_EEPROM := no
+UPLOAD_PORT ?= /dev/ttyACM0
+TARGET_BOARD ?= uno
 
-# print size of geretated segments 
-export WITH_PRINT_SIZE := yes
+include ${ARDDUDE_DIR}/etc/main.mk
 
-# only for programs : launch upload
-export WITH_UPLOAD := no
-# where to upload
-# TODO : try to auto detect with lsusb + /proc exploration
-export UPLOAD_DEVICE := /dev/ttyACM0
-
-C_SOURCES := $(shell find . -name examples -prune , -name "*.c" -o -name "*.cpp" -o -name "*.ino")
-
-export STANDARD := -std=c++11
-
-# call lib.makefile for a utilities library or bin.makefile for a program
-all upload console:
-	${MAKE} -f ${CORE_DIR}etc/bin.makefile $@
-
-clean:
-ifeq (${TARGET},)
-	rm -rf ${PROJECT_DIR}target/*
-endif
-ifneq (${TARGET},)
-	rm -rf ${PROJECT_DIR}target/${TARGET}
-endif
-	
+ARD_TOOLS_DIR := $(call truepath,../ArduinoTools)
+ARD_LIBS_DIR := $(call truepath,../ArduinoLibs)
+#LIBRARIES_DIRS := ${ARD_LIBS_DIR} ${ARD_TOOLS_DIR}
+INCLUDE_FLAGS_EXTRA += $(addprefix -I,${ARD_LIBS_DIR} ${ARD_TOOLS_DIR} .)
+LDFLAGS_EXTRA += -L${ARD_TOOLS_DIR}/target/${TARGET_BOARD} -lArduinoTools
+LDFLAGS_EXTRA += -L${ARD_LIBS_DIR}/target/${TARGET_BOARD} -lArduinoLibs

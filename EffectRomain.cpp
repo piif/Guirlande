@@ -1,12 +1,7 @@
 #include "Guirlande.h"
 #include "Animation.h"
 
-//package piif.guirlande;
-//
-//import static piif.guirlande.Guirlande.*;
-//import static piif.guirlande.Color.*;
-
-class EffectRomain implements Animation {
+class EffectRomain : public Animation {
 	int stage, position;
 	static const int middle = STRIP_LEN / 2;
 
@@ -73,6 +68,6 @@ class EffectRomain implements Animation {
 			stripUpdate();
 			return 10;
 		}
-
 	}
+	virtual ~EffectRomain() {};
 };

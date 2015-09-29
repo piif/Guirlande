@@ -1,12 +1,7 @@
 #include <Guirlande.h>
 #include <Animation.h>
 
-//package piif.guirlande;
-//
-//import static piif.guirlande.Guirlande.*;
-//import static piif.guirlande.Color.*;
-
-class EffectShade implements Animation {
+class EffectShade : public Animation {
 	int h;
 
 	long doStep(long step) {
@@ -21,4 +16,5 @@ class EffectShade implements Animation {
 		h = h * 4;
 		return -1;
 	}
+	virtual ~EffectShade() {};
 };

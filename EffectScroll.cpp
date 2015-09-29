@@ -1,12 +1,7 @@
 #include <Guirlande.h>
 #include <Animation.h>
 
-//package piif.guirlande;
-//
-//import static piif.guirlande.Guirlande.*;
-//import static piif.guirlande.Color.*;
-
-class EffectScroll implements Animation {
+class EffectScroll : public Animation {
 	long doStep(long step) {
 		if (step == 0) {
 			for(byte i = 0; i < STRIP_LEN; i++) {
@@ -25,4 +20,5 @@ class EffectScroll implements Animation {
 
 		return 25;
 	}
+	virtual ~EffectScroll() {};
 };
