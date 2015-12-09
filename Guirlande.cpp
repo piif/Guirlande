@@ -1,13 +1,4 @@
 #include "Guirlande.h"
-#include "Animation.h"
-
-#include "EffectOnOff.cpp"
-#include "EffectRomain.cpp"
-#include "EffectAll.cpp"
-#include "EffectStack.cpp"
-#include "EffectPeaks.cpp"
-//#include "EffectShade.cpp"
-#include "EffectScroll.cpp"
 
 // PWM'able pins
 const byte linePins[6] = { 3, 5, 6, 9, 10, 11 };
@@ -54,81 +45,70 @@ void lineUpdate() {
 	}
 }
 
-class rotate6_1: public Animation {
-	long doStep(long step) {
-		if (step == 6 * 20) {
-			return -1;
-		}
-		line[step % 6] = 0;
+long rotate6_1(long step) {
+	if (step == 6 * 20) {
+		return -1;
+	}
+	line[step % 6] = 0;
+	line[(step+1) % 6] = 255;
+	lineUpdate();
+
+	return 50;
+}
+
+long rotate6_2(long step) {
+	if (step == 0) {
+		line[0] = line[1] = 255;
+	} else if (step == 6 * 20) {
+		return -1;
+	} else {
+		line[(step+5) % 6] = 0;
 		line[(step+1) % 6] = 255;
-		lineUpdate();
-
-		return 50;
 	}
-	virtual ~rotate6_1() {};
-};
-class rotate6_2: public Animation {
-	long doStep(long step) {
-		if (step == 0) {
-			line[0] = line[1] = 255;
-		} else if (step == 6 * 20) {
-			return -1;
-		} else {
-			line[(step+5) % 6] = 0;
-			line[(step+1) % 6] = 255;
-		}
-		lineUpdate();
+	lineUpdate();
 
-		return 50;
+	return 50;
+}
+
+long fade6_3(long step) {
+	if (step == 0) {
+		line[0] = line[1] = 255;
+	} else if (step == 256 * 5 * 6) {
+		return -1;
+	} else {
+		byte light = step % 256;
+		byte rank = step / 256;
+		line[(rank+5) % 6] = ~light;
+		line[(rank+1) % 6] = light;
 	}
-	virtual ~rotate6_2() {};
+	lineUpdate();
+
+	return 2;
+}
+
+effectFunction effectsLine[] = {
+	fade6_3,
+	rotate6_1,
+	rotate6_2
 };
 
-class fade6_3: public Animation {
-	long doStep(long step) {
-		if (step == 0) {
-			line[0] = line[1] = 255;
-		} else if (step == 256 * 5 * 6) {
-			return -1;
-		} else {
-			byte light = step % 256;
-			byte rank = step / 256;
-			line[(rank+5) % 6] = ~light;
-			line[(rank+1) % 6] = light;
-		}
-		lineUpdate();
-
-		return 2;
-	}
-	virtual ~fade6_3() {};
+effectFunction effectsStrip[] = {
+	EffectDrops,
+	EffectAll,
+	EffectStack,
+	EffectRomain,
+	EffectPeaks,
+	EffectShade,
+	EffectScroll,
+	EffectOnOff
 };
 
-Animation* effectsLine[] = {
-//	nbSteps: 256 * 5 * 6,
-	new fade6_3(),
-//	nbSteps: 6 * 20,
-	new rotate6_1(),
-//	nbSteps: 6 * 20,
-	new rotate6_2()
-};
-
-Animation* effectsStrip[] = {
-	new EffectAll(),
-	new EffectStack(),
-	new EffectRomain(),
-	new EffectPeaks(),
-//	nbSteps: 1,
-//	new EffectShade(),
-	new EffectScroll(),
-	new EffectOnOff()
-};
-
-const unsigned int nbEffectsLine = sizeof(effectsLine) / sizeof(Animation*);
+const unsigned int nbEffectsLine = sizeof(effectsLine) / sizeof(effectFunction);
 int effectLine = 0, forcedLine = -1;
 unsigned long stepLine = 0;
 long delayLine = 0;
 
-const unsigned int nbEffectsStrip = sizeof(effectsStrip) / sizeof(Animation*);
+const unsigned int nbEffectsStrip = sizeof(effectsStrip) / sizeof(effectFunction);
 int effectStrip = 0, forcedStrip = -1;
 unsigned long stepStrip = 0;
 long delayStrip = 0;
@@ -142,13 +122,12 @@ void status() {
 	}
 	Serial.print("Line : anim "); Serial.print(effectLine);
 	Serial.print(" step "); Serial.println(stepLine);
-	Serial.print(" "); effectsLine[effectLine]->status();
 	Serial.println();
 	Serial.print("Strip : anim "); Serial.print(effectStrip);
 	Serial.print(" step "); Serial.println(stepStrip);
-	Serial.print(" "); effectsStrip[effectStrip]->status();
 	Serial.println();
 }
+
 
 void loop() {
 	if (Serial.available()) {
@@ -184,7 +163,7 @@ void loop() {
 			if (stepLine == 0) {
 				lineOff();
 			}
-			delayLine = effectsLine[effectLine]->doStep(stepLine);
+			delayLine = effectsLine[effectLine](stepLine);
 			if (delayLine == -1) {
 				stepLine = 0;
 				if (forcedLine == -1) {
@@ -208,7 +187,7 @@ void loop() {
 			if (stepStrip == 0) {
 				stripOff();
 			}
-			delayStrip = effectsStrip[effectStrip]->doStep(stepStrip);
+			delayStrip = effectsStrip[effectStrip](stepStrip);
 			if (delayStrip < 0) {
 				delayStrip = 0;
 				stepStrip = 0;
