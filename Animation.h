@@ -1,5 +1,7 @@
 #ifndef ANIMATION_H
 #define ANIMATION_H
+#include <Arduino.h>
+#include "myStrip.h"
 
 class Animation {
 public:

@@ -1,4 +1,4 @@
-#include "Guirlande.h"
+#include "Animation.h"
 
 static int stage, position;
 static const int middle = STRIP_LEN / 2;
