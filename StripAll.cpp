@@ -1,4 +1,4 @@
-#include "Animation.h"
+#include "myStrip.h"
 
 static byte stage;
 static byte r, g, b;

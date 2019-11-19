@@ -53,12 +53,6 @@
 #define PIN_B 10
 #define PIN_C 11
 
-// setInterval(callback)
-// callBack => case 1/2/3 , set A,B,C + other
-// use a global 6bits mask
-// main or another setInterval to play changes
-// test speed limits ...
-
 #ifdef WITH_MASK
 
 #define MAX_BUFFER 4

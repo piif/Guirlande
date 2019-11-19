@@ -1,4 +1,4 @@
-#include "Animation.h"
+#include "myStrip.h"
 
 static int stage, position;
 

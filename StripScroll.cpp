@@ -1,4 +1,4 @@
-#include "Animation.h"
+#include "myStrip.h"
 
 long EffectScroll(long step) {
 	if (step == 0) {

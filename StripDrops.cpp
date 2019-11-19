@@ -1,4 +1,4 @@
-#include "Animation.h"
+#include "myStrip.h"
 
 static Color colors[] = {
 	{ g:255, r:  0 ,b:  0 },
