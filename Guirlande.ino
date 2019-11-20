@@ -13,6 +13,7 @@
 #include "StripEffects.h"
 #include "LineEffects.h"
 
+#if __AVR_DEVICE_NAME_ != attiny85
 void usage() {
 	Serial.println("? => this help");
 	Serial.println("+ => light on");
@@ -22,17 +23,22 @@ void usage() {
 	Serial.println(". => iterate on effects");
 	Serial.flush();
 }
+#endif
 
 void setup(void) {
+#if __AVR_DEVICE_NAME_ != attiny85
 	Serial.begin(DEFAULT_BAUDRATE);
+#endif
 
 	stripInit(STRIP_LEN, STRIP_PIN);
 	stripUpdate(); // Initialize all pixels to 'off'
 
 	lineInit();
 
+#if __AVR_DEVICE_NAME_ != attiny85
 	usage();
 	Serial.println("ready"); Serial.flush();
+#endif
 }
 
 const unsigned int nbLineEffects = sizeof(lineEffects) / sizeof(stripEffectFunction);
@@ -49,6 +55,7 @@ long delayStrip = 0;
 
 bool off = false;
 
+#if __AVR_DEVICE_NAME_ != attiny85
 void status() {
 	Serial.print("Status "); Serial.println(off ? "off" : "on");
 	if (off) {
@@ -61,7 +68,9 @@ void status() {
 	Serial.print(" step "); Serial.println(stepStrip);
 	Serial.println();
 }
+#endif
 
+#if __AVR_DEVICE_NAME_ != attiny85
 void checkInput() {
 	if (Serial.available()) {
 		int b = Serial.read();
@@ -91,6 +100,7 @@ void checkInput() {
 		}
 	}
 }
+#endif
 
 void handleLine() {
 	if (delayLine == 0) {
@@ -141,7 +151,9 @@ void handleStrip() {
 }
 
 void loop() {
+#if __AVR_DEVICE_NAME_ != attiny85
 	checkInput();
+#endif
 	if (!off) {
 		handleLine();
 		handleStrip();

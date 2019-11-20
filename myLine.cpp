@@ -27,19 +27,41 @@ void lineInit() {
 	pinMode(PIN_B, INPUT);
 	pinMode(PIN_C, INPUT);
 
-#ifdef WITH_PWM
+#if __AVR_DEVICE_NAME_ == atmega328p
+	// COM1A = 3 = set on compare match
+	// COM1B = 3 = set on compare match
+	// WGM = 5 = Fast PWM, 8-bit , TOP=0xFF
+	// CS = 1 = no prescaling
+	// FOC1A = FOC1B = Force output compare
 	TCCR1A = 0xF1; TCCR1B = 0x09; TCCR1C = 0xC0;
+
+	// COM2A = 3 = set on compare match
+	// COM2B = 0 = no pwm output
+	// WGM = 3 = Fast PWM, TOP=0xFF
+	// CS = 1 = no prescaling
+	// FOC1A = FOC1B = Force output compare
 	TCCR2A = 0xC3; TCCR2B = 0xC1;
-	//	OCR_OUT_A = 50;
-	//	OCR_OUT_B = 128;
-	//	OCR_OUT_C = 200;
-	//	DDRB |= OUT_A | OUT_B | OUT_C;
+#elif __AVR_DEVICE_NAME_ == attiny85
+	// COM0A = 3 = set on compare match
+	// COM0B = 0 = no pwm output
+	// WGM = 3 = Fast PWM, TOP=0xFF
+	// CS = 1 = no prescaling
+	// FOC1A = FOC1B = Force output compare
+	TCCR0A = 0xF1; TCCR0B = 0x09; TCCR1C = 0xC0;
+
+	// CTC = 0 = no counter reset on compare match
+	// COM1A = COM1B = 3 = set on compare match
+	// WGM = 3 = Fast PWM, TOP=0xFF
+	// CS = 1 = no prescaling
+	// FOC1A = FOC1B = Force output compare
+	TCCR1 = 0xC3; GTCCR = 0x3C;
+	OCR1C = 0xFF;
 #endif
 }
 
 #ifdef BY_6
 void displayStep() {
-	byte port = PORTB & OUT_NOT, ddr = DDRB & OUT_NOT; // clear bits 3, 4 & 5 => Z
+	byte port = PORT & OUT_NOT, ddr = DDR & OUT_NOT; // clear bits 3, 4 & 5 => Z
 	static byte displaySubStep= 0;
 
 	//	10z -> 3
@@ -62,9 +84,7 @@ void displayStep() {
 		// B = leds[2] ? '0' : 'z';
 		if (leds[2] > 0) {
 			ddr |= OUT_B;
-#ifdef WITH_PWM
 			OCR_OUT_B = leds[2];
-#endif
 		} // else ddrd already cleared
 
 		displaySubStep = 1;
@@ -76,9 +96,7 @@ void displayStep() {
 		// C = leds[1] ? '0' : 'z';
 		if (leds[1] > 0) {
 			ddr |= OUT_C;
-#ifdef WITH_PWM
 			OCR_OUT_C = leds[1];
-#endif
 		}
 		displaySubStep = 2;
 	break;
@@ -89,9 +107,7 @@ void displayStep() {
 		// A = leds[3] ? '0' : 'z';
 		if (leds[3] > 0) {
 			ddr |= OUT_A;
-#ifdef WITH_PWM
 			OCR_OUT_A = leds[3];
-#endif
 		}
 
 		displaySubStep = 3;
@@ -103,9 +119,7 @@ void displayStep() {
 		// C = leds[4] ? '0' : 'z';
 		if (leds[4] > 0) {
 			ddr |= OUT_C;
-#ifdef WITH_PWM
 			OCR_OUT_C = leds[4];
-#endif
 		}
 		displaySubStep = 4;
 	break;
@@ -116,9 +130,7 @@ void displayStep() {
 		// A = leds[0] ? '0' : 'z';
 		if (leds[0] > 0) {
 			ddr |= OUT_A;
-#ifdef WITH_PWM
 			OCR_OUT_A = leds[0];
-#endif
 		}
 
 		displaySubStep = 5;
@@ -130,22 +142,20 @@ void displayStep() {
 		// B = leds[5] ? '0' : 'z';
 		if (leds[5] > 0) {
 			ddr |= OUT_B;
-#ifdef WITH_PWM
 			OCR_OUT_B = leds[5];
-#endif
 		}
 
 		displaySubStep = 0;
 	break;
 	}
-	PORTB = port;
-	DDRB  = ddr;
+	PORT = port;
+	DDR  = ddr;
 }
 
 #else // BY_6
 
 void displayStep() {
-	byte port = PORTB & OUT_NOT, ddr = DDRB & OUT_NOT; // clear bits 3, 4 & 5 => Z
+	byte port = PORT & OUT_NOT, ddr = DDR & OUT_NOT; // clear bits 3, 4 & 5 => Z
 	static byte displaySubStep= 0;
 
 	//	10z -> 3
@@ -168,17 +178,13 @@ void displayStep() {
 		// B = leds[2] ? '0' : 'z';
 		if (leds[2] > 0) {
 			ddr |= OUT_B;
-#ifdef WITH_PWM
 			OCR_OUT_B = leds[2];
-#endif
 		} // else ddrd already cleared
 
 		// C = leds[1] ? '0' : 'z';
 		if (leds[1] > 0) {
 			ddr |= OUT_C;
-#ifdef WITH_PWM
 			OCR_OUT_C = leds[1];
-#endif
 		}
 		displaySubStep = 1;
 	break;
@@ -186,9 +192,7 @@ void displayStep() {
 		// A = leds[3] ? '0' : 'z';
 		if (leds[3] > 0) {
 			ddr |= OUT_A;
-#ifdef WITH_PWM
 			OCR_OUT_A = leds[3];
-#endif
 		}
 
 		// B = '1';
@@ -197,9 +201,7 @@ void displayStep() {
 		// C = leds[4] ? '0' : 'z';
 		if (leds[4] > 0) {
 			ddr |= OUT_C;
-#ifdef WITH_PWM
 			OCR_OUT_C = leds[4];
-#endif
 		}
 		displaySubStep = 2;
 	break;
@@ -207,17 +209,13 @@ void displayStep() {
 		// A = leds[0] ? '0' : 'z';
 		if (leds[0] > 0) {
 			ddr |= OUT_A;
-#ifdef WITH_PWM
 			OCR_OUT_A = leds[0];
-#endif
 		}
 
 		// B = leds[5] ? '0' : 'z';
 		if (leds[5] > 0) {
 			ddr |= OUT_B;
-#ifdef WITH_PWM
 			OCR_OUT_B = leds[5];
-#endif
 		}
 
 		// C = '1';
@@ -226,11 +224,11 @@ void displayStep() {
 		displaySubStep = 0;
 	break;
 	}
-	PORTB = port;
-	DDRB  = ddr;
+	PORT = port;
+	DDR  = ddr;
 
-//	Serial.print("PORTB "); Serial.println(port, BIN);
-//	Serial.print("DDRB  "); Serial.println(ddr, BIN);
+//	Serial.print("PORT "); Serial.println(port, BIN);
+//	Serial.print("DDR  "); Serial.println(ddr, BIN);
 }
 
 #endif // BY_6

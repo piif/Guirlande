@@ -14,13 +14,14 @@ extern byte leds[6];
 // listed LED should be set "on"
 
 // undef to use on/off mode , def to use variable intensity thru PWM
-#define WITH_PWM
+
+#if __AVR_DEVICE_NAME_ == atmega328p
 
 #define PIN_A 9
 #define PIN_B 10
 #define PIN_C 11
 
-// masks for DDRB and PORTB
+// masks for DDRx and PORTx
 // DDRB = 0 for output , 1 for INPUT
 // PORTB = output
 // thus :
@@ -32,11 +33,37 @@ extern byte leds[6];
 #define OUT_B 0x04
 #define OUT_C 0x08
 
-#ifdef WITH_PWM
-#define OCR_OUT_A OCR1A
-#define OCR_OUT_B OCR1B
-#define OCR_OUT_C OCR2A
-#endif
+#define PORT PORTB
+#define DDR DDRB
+#define OCR_OUT_A OCR0A
+#define OCR_OUT_B OCR1A
+#define OCR_OUT_C OCR1B
+
+#elif __AVR_DEVICE_NAME_ == attiny85
+
+#define PIN_A 5
+#define PIN_B 6
+#define PIN_C 3
+
+// masks for DDRx and PORTx
+// DDRB = 0 for output , 1 for INPUT
+// PORTB = output
+// thus :
+//  DDRB=1 , PORTB=1 => +5
+//  DDRB=1 , PORTB=0 => GND
+//  DDRB=0 , PORTB=? => Z
+
+#define OUT_A 0x01
+#define OUT_B 0x02
+#define OUT_C 0x10
+
+#define PORT PORTB
+#define DDR DDRB
+#define OCR_OUT_A OCR0A
+#define OCR_OUT_B OCR1A
+#define OCR_OUT_C OCR1B
+
+#endif // __AVR_DEVICE_NAME_
 
 extern void lineInit();
 extern void lineSet(byte value);
