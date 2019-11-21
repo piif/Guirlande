@@ -1,4 +1,4 @@
-#include <Arduino.h>
+#include "Arduino.h"
 
 // uncomment to force all lights to max intensity
 // #define POWER_TEST
@@ -13,7 +13,7 @@
 #include "StripEffects.h"
 #include "LineEffects.h"
 
-#if __AVR_DEVICE_NAME_ != attiny85
+#ifndef ARDUINO_attiny
 void usage() {
 	Serial.println("? => this help");
 	Serial.println("+ => light on");
@@ -26,16 +26,20 @@ void usage() {
 #endif
 
 void setup(void) {
-#if __AVR_DEVICE_NAME_ != attiny85
+#ifndef ARDUINO_attiny
 	Serial.begin(DEFAULT_BAUDRATE);
 #endif
 
 	stripInit(STRIP_LEN, STRIP_PIN);
 	stripUpdate(); // Initialize all pixels to 'off'
 
+#ifdef ARDUINO_attiny
 	lineInit();
+#else
+	lineInit(TCCR1B);
+#endif
 
-#if __AVR_DEVICE_NAME_ != attiny85
+#ifndef ARDUINO_attiny
 	usage();
 	Serial.println("ready"); Serial.flush();
 #endif
@@ -55,7 +59,7 @@ long delayStrip = 0;
 
 bool off = false;
 
-#if __AVR_DEVICE_NAME_ != attiny85
+#ifndef ARDUINO_attiny
 void status() {
 	Serial.print("Status "); Serial.println(off ? "off" : "on");
 	if (off) {
@@ -70,7 +74,7 @@ void status() {
 }
 #endif
 
-#if __AVR_DEVICE_NAME_ != attiny85
+#ifndef ARDUINO_attiny
 void checkInput() {
 	if (Serial.available()) {
 		int b = Serial.read();
@@ -151,7 +155,7 @@ void handleStrip() {
 }
 
 void loop() {
-#if __AVR_DEVICE_NAME_ != attiny85
+#ifndef ARDUINO_attiny
 	checkInput();
 #endif
 	if (!off) {

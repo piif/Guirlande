@@ -1,4 +1,4 @@
-#include <Arduino.h>
+#include "Arduino.h"
 
 #define MAX_INTENSITY 255
 
@@ -15,7 +15,7 @@ extern byte leds[6];
 
 // undef to use on/off mode , def to use variable intensity thru PWM
 
-#if __AVR_DEVICE_NAME_ == atmega328p
+#if defined(ARDUINO_AVR_UNO)
 
 #define PIN_A 9
 #define PIN_B 10
@@ -39,7 +39,7 @@ extern byte leds[6];
 #define OCR_OUT_B OCR1A
 #define OCR_OUT_C OCR1B
 
-#elif __AVR_DEVICE_NAME_ == attiny85
+#elif defined(ARDUINO_attiny)
 
 #define PIN_A 5
 #define PIN_B 6
@@ -63,7 +63,9 @@ extern byte leds[6];
 #define OCR_OUT_B OCR1A
 #define OCR_OUT_C OCR1B
 
-#endif // __AVR_DEVICE_NAME_
+#else
+#error device unsupported
+#endif
 
 extern void lineInit();
 extern void lineSet(byte value);

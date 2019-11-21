@@ -27,7 +27,7 @@ void lineInit() {
 	pinMode(PIN_B, INPUT);
 	pinMode(PIN_C, INPUT);
 
-#if __AVR_DEVICE_NAME_ == atmega328p
+#if defined(ARDUINO_AVR_UNO)
 	// COM1A = 3 = set on compare match
 	// COM1B = 3 = set on compare match
 	// WGM = 5 = Fast PWM, 8-bit , TOP=0xFF
@@ -41,13 +41,13 @@ void lineInit() {
 	// CS = 1 = no prescaling
 	// FOC1A = FOC1B = Force output compare
 	TCCR2A = 0xC3; TCCR2B = 0xC1;
-#elif __AVR_DEVICE_NAME_ == attiny85
+#elif defined(ARDUINO_attiny)
 	// COM0A = 3 = set on compare match
 	// COM0B = 0 = no pwm output
 	// WGM = 3 = Fast PWM, TOP=0xFF
 	// CS = 1 = no prescaling
 	// FOC1A = FOC1B = Force output compare
-	TCCR0A = 0xF1; TCCR0B = 0x09; TCCR1C = 0xC0;
+	TCCR0A = 0xF1; TCCR0B = 0x09;
 
 	// CTC = 0 = no counter reset on compare match
 	// COM1A = COM1B = 3 = set on compare match
@@ -56,6 +56,8 @@ void lineInit() {
 	// FOC1A = FOC1B = Force output compare
 	TCCR1 = 0xC3; GTCCR = 0x3C;
 	OCR1C = 0xFF;
+#else
+#error device unsupported
 #endif
 }
 
