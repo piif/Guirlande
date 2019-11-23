@@ -6,21 +6,18 @@ extern long LineFadeAll(long step, byte leds[]);
 extern long LineWave(long step, byte leds[]);
 extern long LineShiftedFade(long step, byte leds[]) ;
 
-#ifdef POWER_TEST
 long LineEffectAllMax(long step, byte leds[]) {
 	lineSet(leds, 255);
 	return 1000;
 }
-#endif
 
+// first anim is "all LEDs steady on", for testing power consumption and LEDs
+// excepted in "test mode", this effect is skipped
 lineEffectFunction lineEffects[] = {
-#ifdef POWER_TEST
-	LineEffectAllMax
-#else
+	LineEffectAllMax,
 	LineTwoLedTrain,
 	LineOnThenOff,
 	LineFadeAll,
 	LineWave,
 	LineShiftedFade
-#endif
 };

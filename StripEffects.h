@@ -9,17 +9,15 @@ extern long EffectShade(long);
 extern long EffectScroll(long);
 extern long EffectOnOff(long);
 
-#ifdef POWER_TEST
 long StripEffectAllMax(long step) {
 	stripAll(255, 255, 255);
 	return 1000;
 }
-#endif
 
+// first anim is "all LEDs steady white", for testing power consumption and LEDs
+// excepted in "test mode", this effect is skipped
 stripEffectFunction effectsStrip[] = {
-#ifdef POWER_TEST
-	StripEffectAllMax
-#else
+	StripEffectAllMax,
 	EffectDrops,
 	EffectAll,
 	EffectStack,
@@ -28,5 +26,4 @@ stripEffectFunction effectsStrip[] = {
 	EffectShade,
 	EffectScroll,
 	EffectOnOff
-#endif
 };

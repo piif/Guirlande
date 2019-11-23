@@ -4,6 +4,11 @@
 
 byte leds[6] = { 0, };
 
+void lineOff() {
+	PORT &= OUT_NOT;
+	DDR &= OUT_NOT;
+}
+
 void lineSet(byte leds[], byte value) {
 	leds[0] = value;
 	leds[1] = value;

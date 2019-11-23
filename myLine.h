@@ -68,6 +68,7 @@ extern byte leds[6];
 #endif
 
 extern void lineInit();
+extern void lineOff();
 extern void lineSet(byte value);
 extern void displayStep();
 

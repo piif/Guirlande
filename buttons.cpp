@@ -1,14 +1,4 @@
-#include "Arduino.h"
-
-void setup() {
-	Serial.begin(115200);
-	pinMode(13, OUTPUT);
-	digitalWrite(13, LOW);
-
-	pinMode(A0, INPUT);
-}
-
-const int tolerance = 15;
+#include "buttons.h"
 
 // computed values for 3 resistor bridges with common resistor = R
 // and 3 other ones with R, 2*R, 3*R
@@ -22,12 +12,10 @@ int refValues[] = {
 	465,
 	663
 };
+const int tolerance = 15;
 const byte nbValues = (sizeof(refValues)/sizeof(int));
 
-byte lookup(int value) {
-//	if (value < threshold) {
-//		return 0;
-//	}
+byte lookupButtons(int value) {
 	for(byte i=0; i < nbValues; i++) {
 		if (value >= refValues[i]-tolerance && value <= refValues[i]+tolerance) {
 			return i;
@@ -36,10 +24,7 @@ byte lookup(int value) {
 	return 255;
 }
 
-void loop() {
-	delay(500);
-	int value = analogRead(A0);
-	Serial.print(value);
-	Serial.print(" => ");
-	Serial.println(lookup(value));
+byte readButtons() {
+	int value = analogRead(BUTTON_INPUT);
+	return lookupButtons(value);
 }
