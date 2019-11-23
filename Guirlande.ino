@@ -33,11 +33,7 @@ void setup(void) {
 	stripInit(STRIP_LEN, STRIP_PIN);
 	stripUpdate(); // Initialize all pixels to 'off'
 
-#ifdef ARDUINO_attiny
 	lineInit();
-#else
-	lineInit(TCCR1B);
-#endif
 
 #ifndef ARDUINO_attiny
 	usage();
