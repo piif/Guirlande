@@ -1,12 +1,20 @@
 #include "Arduino.h"
 
-void setup() {
-	Serial.begin(115200);
-	pinMode(13, OUTPUT);
-	digitalWrite(13, LOW);
+#ifdef ARDUINO_attiny
 
-	pinMode(A0, INPUT);
-}
+#define BUTTONS_INPUT A1
+#define LED_1 0
+#define LED_2 1
+#define LED_3 4
+
+#else
+
+#define BUTTONS_INPUT A1
+#define LED_1 2
+#define LED_2 3
+#define LED_3 4
+
+#endif
 
 const int tolerance = 15;
 
@@ -25,9 +33,6 @@ int refValues[] = {
 const byte nbValues = (sizeof(refValues)/sizeof(int));
 
 byte lookup(int value) {
-//	if (value < threshold) {
-//		return 0;
-//	}
 	for(byte i=0; i < nbValues; i++) {
 		if (value >= refValues[i]-tolerance && value <= refValues[i]+tolerance) {
 			return i;
@@ -36,10 +41,36 @@ byte lookup(int value) {
 	return 255;
 }
 
+void setup() {
+#ifndef ARDUINO_attiny
+	Serial.begin(115200);
+#endif
+
+	pinMode(LED_1, OUTPUT);
+	pinMode(LED_2, OUTPUT);
+	pinMode(LED_3, OUTPUT);
+
+//	pinMode(BUTTONS_INPUT, INPUT);
+}
+
+byte buttons = 0;
+
 void loop() {
+#ifndef ARDUINO_attiny
 	delay(500);
-	int value = analogRead(A0);
-	Serial.print(value);
-	Serial.print(" => ");
-	Serial.println(lookup(value));
+#endif
+	int value = analogRead(BUTTONS_INPUT);
+	byte newButtons = lookup(value);
+
+	if (newButtons != 255 && newButtons != buttons) {
+		buttons = newButtons;
+#ifndef ARDUINO_attiny
+		Serial.print(value);
+		Serial.print(" => ");
+		Serial.println(buttons);
+#endif
+		digitalWrite(LED_1, !(buttons & 1));
+		digitalWrite(LED_2, !(buttons & 2));
+		digitalWrite(LED_3, !(buttons & 4));
+	}
 }

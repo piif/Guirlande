@@ -1,6 +1,11 @@
 #include <strip.h>
 
+#if defined(ARDUINO_AVR_UNO)
 #define STRIP_PIN A0
+#elif defined(ARDUINO_attiny)
+#define STRIP_PIN A3 // = pin 2
+#endif
+
 #define STRIP_LEN 59
 
 #define COLOR_BLACK ((Color){g:0,r:0,b:0})

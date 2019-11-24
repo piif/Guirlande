@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 #undef WITH_MASK
+
 // define constant above to test basic wiring :
 // user inputs 3 chars values, each char being 1 (or +), 0 (or -) or z (or anything else)
 //	1 => set output to +5
@@ -45,6 +46,12 @@
 
 #define MAX_INTENSITY 255
 
+#ifdef WITH_PWM
+#define OCR_OUT_A OCR1A
+#define OCR_OUT_B OCR1B
+#define OCR_OUT_C OCR2A
+#endif
+
 #if defined(WITH_ANIM) || defined(WITH_NUMS)
 #include "setInterval.h"
 #endif
@@ -64,7 +71,21 @@ void parseBit(char bit, byte output) {
 	case '0':
 	case '-':
 		pinMode(output, OUTPUT);
+#ifdef WITH_PWM
+		switch(output) {
+		case PIN_A:
+			OCR_OUT_A = 128;
+			break;
+		case PIN_B:
+			OCR_OUT_B = 128;
+			break;
+		case PIN_C:
+			OCR_OUT_C = 128;
+			break;
+		}
+#else
 		digitalWrite(output, 0);
+#endif
 	break;
 	case '1':
 	case '+':
@@ -78,6 +99,11 @@ void parseBit(char bit, byte output) {
 }
 
 void parseMask(char *buffer) {
+#ifdef WITH_PWM
+	OCR_OUT_A = 0;
+	OCR_OUT_B = 0;
+	OCR_OUT_C = 0;
+#endif
 	parseBit(buffer[0], PIN_A);
 	parseBit(buffer[1], PIN_B);
 	parseBit(buffer[2], PIN_C);
@@ -115,11 +141,9 @@ void readMask() {
 #define OUT_B 0x04
 #define OUT_C 0x08
 
-#define OCR_OUT_A OCR1A
-#define OCR_OUT_B OCR1B
-#define OCR_OUT_C OCR2A
-
+#ifdef WITH_PWM
 #define OUT_NOT (~(OUT_A | OUT_B | OUT_C))
+#endif
 
 #define MAX_BUFFER 8
 char buffer[MAX_BUFFER];
@@ -546,12 +570,6 @@ void setup() {
 	pinMode(PIN_B, INPUT);
 	pinMode(PIN_C, INPUT);
 
-#ifdef WITH_ANIM
-	animationTimer = setInterval(500, animationStepCallback, 0);
-	startAnim(-1);
-#endif
-
-#if defined(WITH_NUMS) || defined(WITH_ANIM)
 #ifdef WITH_PWM
 	TCCR1A = 0xF1; TCCR1B = 0x09; TCCR1C = 0xC0;
 	TCCR2A = 0xC3; TCCR2B = 0xC1;
@@ -561,6 +579,12 @@ void setup() {
 //	DDRB |= OUT_A | OUT_B | OUT_C;
 #endif
 
+#ifdef WITH_ANIM
+	animationTimer = setInterval(500, animationStepCallback, 0);
+	startAnim(-1);
+#endif
+
+#if defined(WITH_NUMS) || defined(WITH_ANIM)
 #ifdef BY_6
 	displayTimer = setInterval(1, displayStepCallback_6, 0);
 #else
