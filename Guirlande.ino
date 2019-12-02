@@ -287,7 +287,5 @@ void loop() {
 	}
 #endif
 
-#ifndef ARDUINO_attiny
 	delay(1);
-#endif
 }

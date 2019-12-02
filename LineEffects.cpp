@@ -11,23 +11,23 @@ void rotateRight(byte leds[]) {
 }
 
 // loops on 6 steps , make it 5 times => stop at step = 6x5-1 = 29
-long LineTwoLedTrain(long step, byte leds[]) {
+long Line4LedsTrain(long step, byte leds[]) {
 	static byte led = 0;
 
-	if (step == 30) { return -1; }
+	if (step == 36) { return -1; }
 
 	if (step == 0) {
-		leds[0] = MAX_INTENSITY;
-		leds[1] = MAX_INTENSITY >> 3;
-		leds[2] = 0;
-		leds[3] = 0;
+		leds[0] = MAX_INTENSITY >> 3;
+		leds[1] = MAX_INTENSITY >> 2;
+		leds[2] = MAX_INTENSITY >> 1;
+		leds[3] = MAX_INTENSITY;
 		leds[4] = 0;
 		leds[5] = 0;
 	} else {
 		rotateRight(leds);
 	}
 
-	return 250;
+	return 100;
 }
 
 // loops on 12 steps , make it 10 times => stop at step = 12x10-1 = 120
@@ -35,7 +35,7 @@ long LineOnThenOff(long step, byte leds[]) {
 	static byte led = 0;
 	static byte on = MAX_INTENSITY;
 
-	if (step == 120) { return -1; }
+	if (step == 72) { return -1; }
 
 	if (step == 0) {
 		lineSet(leds, 0);
@@ -100,6 +100,27 @@ long LineShiftedFade(long step, byte leds[]) {
 	leds[5]++;
 
 	return 5;
+}
+
+long LineFadeEach(long step, byte leds[]) {
+	if (step == 96) { return -1; }
+
+	if (step == 0) {
+		lineSet(leds, 0);
+	} else {
+		byte l = (step >> 3) % 6;
+		switch(step & 0x07) {
+		case 0: leds[l]=  0; break;
+		case 1: leds[l]= 40; break;
+		case 2: leds[l]=100; break;
+		case 3: leds[l]=255; break;
+		case 4: leds[l]=255; break;
+		case 5: leds[l]=100; break;
+		case 6: leds[l]= 40; break;
+		case 7: leds[l]=  0; break;
+		}
+	}
+	return 50;
 }
 
 /**

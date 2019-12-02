@@ -17,9 +17,9 @@ extern byte leds[6];
 
 #if defined(ARDUINO_AVR_UNO)
 
-#define PIN_A 9
-#define PIN_B 10
-#define PIN_C 11
+#define PIN_A 8
+#define PIN_B 9
+#define PIN_C 10
 
 // masks for DDRx and PORTx
 // DDRB = 0 for output , 1 for INPUT
@@ -29,15 +29,14 @@ extern byte leds[6];
 //  DDRB=1 , PORTB=0 => GND
 //  DDRB=0 , PORTB=? => Z
 
-#define OUT_A 0x02
-#define OUT_B 0x04
-#define OUT_C 0x08
+#define OUT_A 0x01
+#define OUT_B 0x02
+#define OUT_C 0x04
 
 #define PORT PORTB
 #define DDR DDRB
-#define OCR_OUT_A OCR1A
-#define OCR_OUT_B OCR1B
-#define OCR_OUT_C OCR2A
+#define OCR_OUT_B OCR1A
+#define OCR_OUT_C OCR1B
 
 #elif defined(ARDUINO_attiny)
 
@@ -59,7 +58,6 @@ extern byte leds[6];
 
 #define PORT PORTB
 #define DDR DDRB
-#define OCR_OUT_A OCR0A
 #define OCR_OUT_B OCR1A
 #define OCR_OUT_C OCR1B
 

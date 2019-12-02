@@ -1,10 +1,11 @@
 typedef long (*lineEffectFunction)(long, byte leds[]);
 
-extern long LineTwoLedTrain(long step, byte leds[]);
+extern long Line4LedsTrain(long step, byte leds[]);
 extern long LineOnThenOff(long step, byte leds[]);
 extern long LineFadeAll(long step, byte leds[]);
 extern long LineWave(long step, byte leds[]);
 extern long LineShiftedFade(long step, byte leds[]) ;
+extern long LineFadeEach(long step, byte leds[]);
 
 long LineEffectAllMax(long step, byte leds[]) {
 	lineSet(leds, 255);
@@ -15,7 +16,9 @@ long LineEffectAllMax(long step, byte leds[]) {
 // excepted in "test mode", this effect is skipped
 lineEffectFunction lineEffects[] = {
 	LineEffectAllMax,
-	LineTwoLedTrain,
+
+	LineFadeEach,
+	Line4LedsTrain,
 	LineOnThenOff,
 	LineFadeAll,
 	LineWave,

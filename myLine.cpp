@@ -33,33 +33,18 @@ void lineInit() {
 	pinMode(PIN_C, INPUT);
 
 #if defined(ARDUINO_AVR_UNO)
-	// COM1A = 3 = set on compare match
-	// COM1B = 3 = set on compare match
+	// COM1A = COM1B = 2 = clear on compare match
 	// WGM = 5 = Fast PWM, 8-bit , TOP=0xFF
 	// CS = 1 = no prescaling
 	// FOC1A = FOC1B = Force output compare
-	TCCR1A = 0xF1; TCCR1B = 0x09; TCCR1C = 0xC0;
-
-	// COM2A = 3 = set on compare match
-	// COM2B = 0 = no pwm output
-	// WGM = 3 = Fast PWM, TOP=0xFF
-	// CS = 1 = no prescaling
-	// FOC1A = FOC1B = Force output compare
-	TCCR2A = 0xC3; TCCR2B = 0xC1;
+	TCCR1A = 0xA1; TCCR1B = 0x09; TCCR1C = 0xC0;
 #elif defined(ARDUINO_attiny)
-	// COM0A = 3 = set on compare match
-	// COM0B = 0 = no pwm output
-	// WGM = 3 = Fast PWM, TOP=0xFF
-	// CS = 1 = no prescaling
-	// FOC1A = FOC1B = Force output compare
-	TCCR0A = 0xF1; TCCR0B = 0x09;
-
 	// CTC = 0 = no counter reset on compare match
-	// COM1A = COM1B = 3 = set on compare match
-	// WGM = 3 = Fast PWM, TOP=0xFF
+	// COM1A = COM1B = 2 = clear on compare match
+	// PWM1A = PWM1B = 1 = PWM, TOP=OCR1C=0xFF
 	// CS = 1 = no prescaling
 	// FOC1A = FOC1B = Force output compare
-	TCCR1 = 0xC3; GTCCR = 0x3C;
+	TCCR1 = 0x61; GTCCR = 0x6C;
 	OCR1C = 0xFF;
 #else
 #error device unsupported
@@ -69,7 +54,7 @@ void lineInit() {
 #ifdef BY_6
 void displayStep() {
 	byte port = PORT & OUT_NOT, ddr = DDR & OUT_NOT; // clear bits 3, 4 & 5 => Z
-	static byte displaySubStep= 0;
+	static byte displaySubStep = 0;
 
 	//	10z -> 3
 	//	1z0 -> 2
@@ -85,71 +70,79 @@ void displayStep() {
 
 	switch(displaySubStep) {
 	case 0:
-		// A = '1';
-		port |= OUT_A; OCR_OUT_A = 0; ddr |= OUT_A;
+		// A = 0;
+		ddr |= OUT_A;
 
-		// B = leds[2] ? '0' : 'z';
-		if (leds[2] > 0) {
-			ddr |= OUT_B;
-			OCR_OUT_B = leds[2];
-		} // else ddrd already cleared
+		// C = leds[0]>0 ? leds[0] : 'z';
+		if (leds[0] > 0) {
+			ddr |= OUT_C;
+			OCR_OUT_C = leds[0];
+		}
 
 		displaySubStep = 1;
 	break;
 	case 1:
-		// A = '1';
-		port |= OUT_A; OCR_OUT_A = 0; ddr |= OUT_A;
+		// A = 1
+		port |= OUT_A;
+		ddr |= OUT_A;
 
-		// C = leds[1] ? '0' : 'z';
+		// C = leds[1]>0 ? 256-leds[1] : 'z';
 		if (leds[1] > 0) {
 			ddr |= OUT_C;
-			OCR_OUT_C = leds[1];
+			OCR_OUT_C = ~leds[1];
 		}
+
 		displaySubStep = 2;
 	break;
 	case 2:
-		// B = '1';
-		port |= OUT_B; OCR_OUT_B = 0; ddr |= OUT_B;
+		// A = 1;
+		port |= OUT_A;
+		ddr |= OUT_A;
 
-		// A = leds[3] ? '0' : 'z';
-		if (leds[3] > 0) {
-			ddr |= OUT_A;
-			OCR_OUT_A = leds[3];
+		// B = leds[2]>0 ? 256-leds[2] : 'z';
+		if (leds[2] > 0) {
+			ddr |= OUT_B;
+			OCR_OUT_B = ~leds[2];
 		}
 
 		displaySubStep = 3;
 	break;
 	case 3:
-		// B = '1';
-		port |= OUT_B; OCR_OUT_B = 0; ddr |= OUT_B;
+		// A = 0;
+		ddr |= OUT_A;
 
-		// C = leds[4] ? '0' : 'z';
-		if (leds[4] > 0) {
-			ddr |= OUT_C;
-			OCR_OUT_C = leds[4];
-		}
+		// B = leds[3] ? leds[3] : 'z';
+		if (leds[3] > 0) {
+			ddr |= OUT_B;
+			OCR_OUT_B = leds[3];
+		} // else ddr already cleared
+
 		displaySubStep = 4;
 	break;
 	case 4:
 		// C = '1';
-		port |= OUT_C; OCR_OUT_C = 0; ddr |= OUT_C;
+		ddr |= OUT_C;
+		port |= OUT_C;
+		OCR_OUT_C = 0x0;
 
-		// A = leds[0] ? '0' : 'z';
-		if (leds[0] > 0) {
-			ddr |= OUT_A;
-			OCR_OUT_A = leds[0];
+		// B = leds[4]>0 ? leds[4] : 'z';
+		if (leds[4] > 0) {
+			ddr |= OUT_B;
+			OCR_OUT_B = leds[4];
 		}
 
 		displaySubStep = 5;
 	break;
 	case 5:
-		// C = '1';
-		port |= OUT_C; OCR_OUT_C = 0; ddr |= OUT_C;
+		// B = 0;
+		ddr |= OUT_B;
+		port |= OUT_B;
+		OCR_OUT_B = 0x0;
 
-		// B = leds[5] ? '0' : 'z';
+		// C = leds[5]>0 ? leds[5] : 'z';
 		if (leds[5] > 0) {
-			ddr |= OUT_B;
-			OCR_OUT_B = leds[5];
+			ddr |= OUT_C;
+			OCR_OUT_C = leds[5];
 		}
 
 		displaySubStep = 0;

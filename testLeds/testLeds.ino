@@ -26,10 +26,13 @@
 //	001 -> 1+6
 //	other => nothing
 
-#undef WITH_NUMS
+#define WITH_NUMS
 // define constant above to test mapping between LED number list and outputs
 
-#define WITH_ANIM
+#undef WITH_BUTTONS
+// define constant above to test mapping with button inputs instead of serial (to use with ATtiny)
+
+#undef WITH_ANIM
 // define constant above to test animations : user inputs a letter to launch related animation or '-' to stop.
 
 // following constants are used for WITH_NUMS and WITH_ANIM modes
@@ -44,21 +47,78 @@
 // undef to use on/off mode , def to use variable intensity thru PWM
 #define WITH_PWM
 
-#define MAX_INTENSITY 255
+// deduce other constants from previous defines
 
-#ifdef WITH_PWM
-#define OCR_OUT_A OCR1A
-#define OCR_OUT_B OCR1B
-#define OCR_OUT_C OCR2A
+#ifdef WITH_BUTTONS
+	#include "buttons.h"
 #endif
 
 #if defined(WITH_ANIM) || defined(WITH_NUMS)
-#include "setInterval.h"
+	#include "setInterval.h"
 #endif
 
-#define PIN_A 9
-#define PIN_B 10
-#define PIN_C 11
+#if defined(ARDUINO_AVR_UNO)
+
+	#define PIN_A 8
+	#define PIN_B 9
+	#define PIN_C 10
+
+	// masks for DDRx and PORTx
+	// DDRB = 0 for output , 1 for INPUT
+	// PORTB = output
+	// thus :
+	//  DDRB=1 , PORTB=1 => +5
+	//  DDRB=1 , PORTB=0 => GND
+	//  DDRB=0 , PORTB=? => Z
+
+	#define OUT_A 0x01
+	#define OUT_B 0x02
+	#define OUT_C 0x04
+
+	#define PORT PORTB
+	#define DDR DDRB
+	#ifdef WITH_PWM
+//		#define OCR_OUT_A OCR1A
+		#define OCR_OUT_B OCR1A
+		#define OCR_OUT_C OCR1B
+	#endif
+
+#elif defined(ARDUINO_attiny)
+
+	#define PIN_A 0 // pin 5
+	#define PIN_B 1 // pin 6
+	#define PIN_C 4 // pin 3
+
+	// masks for DDRx and PORTx
+	// DDRB = 0 for output , 1 for INPUT
+	// PORTB = output
+	// thus :
+	//  DDRB=1 , PORTB=1 => +5
+	//  DDRB=1 , PORTB=0 => GND
+	//  DDRB=0 , PORTB=? => Z
+
+	#define OUT_A 0x01
+	#define OUT_B 0x02
+	#define OUT_C 0x10
+
+	#define PORT PORTB
+	#define DDR DDRB
+	#ifdef WITH_PWM
+//		#define OCR_OUT_A OCR0A
+		#define OCR_OUT_B OCR1A
+		#define OCR_OUT_C OCR1B
+	#endif
+
+#else
+	#error device unsupported
+#endif
+
+#define OUT_NOT (~(OUT_A | OUT_B | OUT_C))
+
+#ifdef WITH_PWM
+	#define MAX_INTENSITY 255
+#endif
+
 
 #ifdef WITH_MASK
 
@@ -129,32 +189,20 @@ void readMask() {
 
 #if defined(WITH_NUMS) || defined(WITH_ANIM)
 
-// masks for DDRB and PORTB
-// DDRB = 0 for output , 1 for INPUT
-// PORTB = output
+// masks for DDR and PORT
+// DDR = 0 for output , 1 for INPUT
+// PORT = output
 // thus :
-//  DDRB=1 , PORTB=1 => +5
-//  DDRB=1 , PORTB=0 => GND
-//  DDRB=0 , PORTB=? => Z
-
-#define OUT_A 0x02
-#define OUT_B 0x04
-#define OUT_C 0x08
-
-#ifdef WITH_PWM
-#define OUT_NOT (~(OUT_A | OUT_B | OUT_C))
-#endif
-
-#define MAX_BUFFER 8
-char buffer[MAX_BUFFER];
-int index = 0;
+//  DDR=1 , PORT=1 => +5
+//  DDR=1 , PORT=0 => GND
+//  DDR=0 , PORT=? => Z
 
 byte leds[6] = { 0, };
 setIntervalTimer displayTimer = 0;
 
 #ifdef BY_6
 void displayStepCallback_6(void *userData, long late, int missed) {
-	byte port = PORTB & OUT_NOT, ddr = DDRB & OUT_NOT; // clear bits 3, 4 & 5 => Z
+	byte port = PORT & OUT_NOT, ddr = DDR & OUT_NOT; // clear bits => set to Z
 	static byte displaySubStep= 0;
 
 	//	10z -> 3
@@ -171,96 +219,108 @@ void displayStepCallback_6(void *userData, long late, int missed) {
 
 	switch(displaySubStep) {
 	case 0:
-		// A = '1';
-		port |= OUT_A; OCR_OUT_A = 0; ddr |= OUT_A;
+		// A = 0;
+		ddr |= OUT_A;
 
-		// B = leds[2] ? '0' : 'z';
-		if (leds[2] > 0) {
-			ddr |= OUT_B;
+		// C = leds[0]>0 ? leds[0] : 'z';
+		if (leds[0] > 0) {
+			ddr |= OUT_C;
 #ifdef WITH_PWM
-			OCR_OUT_B = leds[2];
+			OCR_OUT_C = leds[0];
 #endif
-		} // else ddrd already cleared
+		}
 
 		displaySubStep = 1;
 	break;
 	case 1:
-		// A = '1';
-		port |= OUT_A; OCR_OUT_A = 0; ddr |= OUT_A;
+		// A = 1
+		port |= OUT_A;
+		ddr |= OUT_A;
 
-		// C = leds[1] ? '0' : 'z';
+		// C = leds[1]>0 ? 256-leds[1] : 'z';
 		if (leds[1] > 0) {
 			ddr |= OUT_C;
 #ifdef WITH_PWM
-			OCR_OUT_C = leds[1];
+			OCR_OUT_C = ~leds[1];
 #endif
 		}
+
 		displaySubStep = 2;
 	break;
 	case 2:
-		// B = '1';
-		port |= OUT_B; OCR_OUT_B = 0; ddr |= OUT_B;
+		// A = 1;
+		port |= OUT_A;
+		ddr |= OUT_A;
 
-		// A = leds[3] ? '0' : 'z';
-		if (leds[3] > 0) {
-			ddr |= OUT_A;
+		// B = leds[2]>0 ? 256-leds[2] : 'z';
+		if (leds[2] > 0) {
+			ddr |= OUT_B;
 #ifdef WITH_PWM
-			OCR_OUT_A = leds[3];
+			OCR_OUT_B = ~leds[2];
 #endif
 		}
 
 		displaySubStep = 3;
 	break;
 	case 3:
-		// B = '1';
-		port |= OUT_B; OCR_OUT_B = 0; ddr |= OUT_B;
+		// A = 0;
+		ddr |= OUT_A;
 
-		// C = leds[4] ? '0' : 'z';
-		if (leds[4] > 0) {
-			ddr |= OUT_C;
+		// B = leds[3] ? leds[3] : 'z';
+		if (leds[3] > 0) {
+			ddr |= OUT_B;
 #ifdef WITH_PWM
-			OCR_OUT_C = leds[4];
+			OCR_OUT_B = leds[3];
 #endif
-		}
+		} // else ddr already cleared
+
 		displaySubStep = 4;
 	break;
 	case 4:
 		// C = '1';
-		port |= OUT_C; OCR_OUT_C = 0; ddr |= OUT_C;
-
-		// A = leds[0] ? '0' : 'z';
-		if (leds[0] > 0) {
-			ddr |= OUT_A;
+		ddr |= OUT_C;
 #ifdef WITH_PWM
-			OCR_OUT_A = leds[0];
+		port |= OUT_C;
+		OCR_OUT_C = 0x0;
+#endif
+
+		// B = leds[4]>0 ? leds[4] : 'z';
+		if (leds[4] > 0) {
+			ddr |= OUT_B;
+#ifdef WITH_PWM
+			OCR_OUT_B = leds[4];
 #endif
 		}
 
 		displaySubStep = 5;
 	break;
 	case 5:
-		// C = '1';
-		port |= OUT_C; OCR_OUT_C = 0; ddr |= OUT_C;
-
-		// B = leds[5] ? '0' : 'z';
-		if (leds[5] > 0) {
-			ddr |= OUT_B;
+		// B = 0;
+		ddr |= OUT_B;
 #ifdef WITH_PWM
-			OCR_OUT_B = leds[5];
+		port |= OUT_B;
+		OCR_OUT_B = 0x0;
+#endif
+
+		// C = leds[5]>0 ? leds[5] : 'z';
+		if (leds[5] > 0) {
+			ddr |= OUT_C;
+#ifdef WITH_PWM
+			OCR_OUT_C = leds[5];
 #endif
 		}
 
 		displaySubStep = 0;
 	break;
 	}
-	PORTB = port;
-	DDRB  = ddr;
+	PORT = port;
+	DDR  = ddr;
 }
 #endif // BY_6
 
 #ifdef BY_3
 void displayStepCallback_3(void *userData, long late, int missed) {
-	byte port = PORTB & OUT_NOT, ddr = DDRB & OUT_NOT; // clear bits 3, 4 & 5 => Z
+	byte port = PORT & OUT_NOT, ddr = DDR & OUT_NOT; // clear bits 3, 4 & 5 => Z
 	static byte displaySubStep= 0;
 
 	//	10z -> 3
@@ -278,7 +338,11 @@ void displayStepCallback_3(void *userData, long late, int missed) {
 	switch(displaySubStep) {
 	case 0:
 		// A = '1';
-		port |= OUT_A; OCR_OUT_A = 0; ddr |= OUT_A;
+		port |= OUT_A;
+		ddr |= OUT_A;
+#ifdef WITH_PWM
+		OCR_OUT_A = 0;
+#endif
 
 		// B = leds[2] ? '0' : 'z';
 		if (leds[2] > 0) {
@@ -307,7 +371,11 @@ void displayStepCallback_3(void *userData, long late, int missed) {
 		}
 
 		// B = '1';
-		port |= OUT_B; OCR_OUT_B = 0; ddr |= OUT_B;
+		port |= OUT_B;
+		ddr |= OUT_B;
+#ifdef WITH_PWM
+		OCR_OUT_B = 0;
+#endif
 
 		// C = leds[4] ? '0' : 'z';
 		if (leds[4] > 0) {
@@ -336,35 +404,110 @@ void displayStepCallback_3(void *userData, long late, int missed) {
 		}
 
 		// C = '1';
-		port |= OUT_C; OCR_OUT_C = 0; ddr |= OUT_C;
+		port |= OUT_C;
+		ddr |= OUT_C;
+#ifdef WITH_PWM
+		OCR_OUT_C = 0;
+#endif
 
 		displaySubStep = 0;
 	break;
 	}
-	PORTB = port;
-	DDRB  = ddr;
+	PORT = port;
+	DDR  = ddr;
 
-//	Serial.print("PORTB "); Serial.println(port, BIN);
-//	Serial.print("DDRB  "); Serial.println(ddr, BIN);
+//	Serial.print("PORT "); Serial.println(port, BIN);
+//	Serial.print("DDR  "); Serial.println(ddr, BIN);
 }
 #endif // BY_3
 
 #endif // defined(WITH_NUMS) || defined(WITH_ANIM)
 
 #ifdef WITH_NUMS
+
+#ifdef WITH_BUTTONS
+	byte buttons = 0;
+#else
+	#define MAX_BUFFER 25
+	char buffer[MAX_BUFFER];
+	int index = 0;
+#endif
+
+#ifndef WITH_BUTTONS
+byte intensity = 128;
+
 void parseNums(char *buffer) {
 	Serial.print("Parsing "); Serial.println(buffer);
+	if (buffer[0] == ':') {
+		char *c = buffer+1;
+		char l=0;
+		leds[l] = 0;
+		while(*c != '\0') {
+			if (*c == ' ') {
+				l++;
+				leds[l] = 0;
+			} else {
+				leds[l] = leds[l] * 10 + (*c - '0');
+			}
+			c++;
+		}
+		return;
+	}
+	if (buffer[0] == '+') {
+		char *c = buffer+1;
+		intensity=0;
+		while(*c != '\0') {
+			intensity = intensity * 10 + (*c - '0');
+			c++;
+		}
+		Serial.print("Intensity = "); Serial.println(intensity);
+		for(byte l = 0; l < 6; l++) {
+			if (leds[l] != 0) {
+				leds[l] = intensity;
+			}
+		}
+		return;
+	}
 	for(byte l = 0; l < 6; l++) {
 		leds[l] = 0;
 	}
 	for(char *c = buffer; *c; c++) {
 		if (*c >= '1' && *c <= '6') {
-			leds[*c-'1'] = 1;
+			leds[*c-'1'] = intensity;
 		}
 	}
 }
+#endif
 
 void readNums() {
+#ifdef WITH_BUTTONS
+	byte newButtons = readButtons();
+	if (newButtons == 255 || newButtons == buttons) {
+		return;
+	}
+
+#ifndef ARDUINO_attiny
+	Serial.println(analogRead(BUTTON_INPUT));
+	Serial.println(newButtons);
+#endif
+	if (buttons==7) {
+		leds[0] = leds[1] = leds[2] = leds[3] = leds[4] = leds[5] = 0;
+	} else if (buttons>0) {
+		leds[buttons-1] = 0;
+	}
+	if (newButtons==7) {
+		leds[0] = leds[1] = leds[2] = leds[3] = leds[4] = leds[5] = 210;
+	} else if (newButtons>0) {
+		leds[newButtons-1] = 50;
+	}
+	buttons = newButtons;
+
+//	int value = analogRead(BUTTON_INPUT);
+//	for(int i=5, mask = 64 ; i>=0; i--, mask >>= 1) {
+//		leds[i] = (value & mask) != 0;
+//	}
+
+#else
 	if (!Serial.available()) {
 		return;
 	}
@@ -382,7 +525,9 @@ void readNums() {
 	} else {
 		index++;
 	}
+#endif // WITH_BUTTONS
 }
+
 #endif // WITH_NUMS
 
 
@@ -565,19 +710,36 @@ void readAnim() {
 #endif // WITH_ANIM
 
 void setup() {
+#ifndef ARDUINO_attiny
 	Serial.begin(115200);
+#endif
+#if defined(WITH_MASK)
 	pinMode(PIN_A, INPUT);
 	pinMode(PIN_B, INPUT);
 	pinMode(PIN_C, INPUT);
+#endif
 
 #ifdef WITH_PWM
-	TCCR1A = 0xF1; TCCR1B = 0x09; TCCR1C = 0xC0;
-	TCCR2A = 0xC3; TCCR2B = 0xC1;
-//	OCR_OUT_A = 50;
-//	OCR_OUT_B = 128;
-//	OCR_OUT_C = 200;
-//	DDRB |= OUT_A | OUT_B | OUT_C;
+
+#if defined(ARDUINO_AVR_UNO)
+	// COM1A = COM1B = 2 = clear on compare match
+	// WGM = 5 = Fast PWM, 8-bit , TOP=0xFF
+	// CS = 1 = no prescaling
+	// FOC1A = FOC1B = Force output compare
+	TCCR1A = 0xA1; TCCR1B = 0x09; TCCR1C = 0xC0;
+#elif defined(ARDUINO_attiny)
+	// CTC = 0 = no counter reset on compare match
+	// COM1A = COM1B = 2 = clear on compare match
+	// PWM1A = PWM1B = 1 = PWM, TOP=OCR1C=0xFF
+	// CS = 1 = no prescaling
+	// FOC1A = FOC1B = Force output compare
+	TCCR1 = 0x61; GTCCR = 0x6C;
+	OCR1C = 0xFF;
+#else
+#error device unsupported
 #endif
+
+#endif // WITH_PWM
 
 #ifdef WITH_ANIM
 	animationTimer = setInterval(500, animationStepCallback, 0);
@@ -592,7 +754,9 @@ void setup() {
 #endif
 #endif
 
+#ifndef ARDUINO_attiny
 	Serial.println("ready");
+#endif
 }
 
 void loop() {
@@ -607,4 +771,5 @@ void loop() {
 	readAnim();
 	setIntervalStep();
 #endif
+	delay(1);
 }
