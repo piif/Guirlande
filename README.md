@@ -4,5 +4,5 @@ This code is made to drive 2 Christmas tree decoration :
 - a line of 60 LEDs, linked in triangle wiring
 
 This is version 3 of my "Guirlande" project.
-It use arddude projet to compile and upload.
+It uses arddude projet to compile and upload.
 

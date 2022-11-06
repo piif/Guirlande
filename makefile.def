@@ -1,5 +1,11 @@
-BOARD := arduino:avr:uno
-#BOARD := attiny:avr:ATtinyX5:cpu=attiny85,clock=internal8
+# FOR UNO
+#BOARD := arduino:avr:uno
+
+# FOR TINY
+BOARD := attiny:avr:ATtinyX5:cpu=attiny85,clock=internal8
+ARDUINO_CLI_UPLOAD_OPTS := -v
+
+# common part
 ARDDUDE_OPTIONS := -l cr -o raw -d
 PORT := /dev/ttyUSB0
 LIBRARY_PATH := ~/GitHub/piif/ArduinoLibs ~/GitHub/piif/ArduinoTools
