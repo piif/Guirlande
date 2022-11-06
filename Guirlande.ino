@@ -7,7 +7,7 @@
  *
  * For Arduino Uno :
  * - LED Strip data pin on A0      (defined in myStrip.h)
- * - LED line A,B,C on pin 9,10,11 (defined in myLine.h)
+ * - LED line A,B,C on pin 8,9,10  (defined in myLine.h)
  * - buttons on A1                 (defined in buttons.h)
  *
  * For ATtiny :
@@ -72,6 +72,8 @@ byte buttons = 0;
 bool testMode = false;
 
 #ifdef LINE_ENABLED
+bool lineUnitTest = false;
+char lineTestStates[4] = { '\0', };
 bool lineDisabled = false;
 const unsigned int nbLineEffects = sizeof(lineEffects) / sizeof(lineEffectFunction);
 short effectLine = 1;
@@ -93,7 +95,11 @@ long delayStrip = 0;
 void status() {
 	Serial.print("Status :");
 #ifdef LINE_ENABLED
-	Serial.print(lineDisabled ? " line off" : " line on");
+	if (lineTestStates) {
+		Serial.print("unit test ");Serial.print(lineTestStates);
+	} else {
+		Serial.print(lineDisabled ? " line off" : " line on");
+	}
 #endif
 #ifdef STRIP_ENABLED
 	Serial.println(stripDisabled ? ", strip off" : ", strip on");
@@ -224,12 +230,37 @@ void handleButtons(byte newButtons) {
 }
 
 #ifndef ARDUINO_attiny
+void unitTestPin(byte pin, int state) {
+	switch(state) {
+		case '0':
+			pinMode(pin, OUTPUT);
+			digitalWrite(pin, 0);
+		break;
+		case '1':
+			pinMode(pin, OUTPUT);
+			digitalWrite(pin, 1);
+		break;
+		case 'z':
+			pinMode(pin, INPUT);
+		break;
+		default:
+			Serial.print("wrong input "); Serial.println((char)state);
+		break;
+	}
+}
+void unitTest(int stateA, int stateB, int stateC) {
+	unitTestPin(PIN_A, stateA);
+	unitTestPin(PIN_B, stateB);
+	unitTestPin(PIN_C, stateC);
+}
+
 void checkInput() {
 	if (Serial.available()) {
 		int b = Serial.read();
 		if (b == '-') {
 #ifdef LINE_ENABLED
 			lineDisabled = true;
+			lineUnitTest = false;
 			lineOff();
 #endif
 #ifdef STRIP_ENABLED
@@ -239,6 +270,7 @@ void checkInput() {
 		} else if (b == '+') {
 #ifdef LINE_ENABLED
 			lineDisabled = false;
+			lineUnitTest = false;
 			stepLine = effectLine = 0;
 #endif
 #ifdef STRIP_ENABLED
@@ -247,18 +279,29 @@ void checkInput() {
 #endif
 #ifdef LINE_ENABLED
 		} else if (b >= '0' && b <= '9') {
+			lineUnitTest = false;
 			forceLine((b - '0') % nbLineEffects);
 #endif
 #ifdef STRIP_ENABLED
 		} else if (b >= 'A' && b <= 'Z') {
+			lineUnitTest = false;
 			forceStrip((b - 'A') % nbEffectsStrip);
 #endif
 		} else if (b == '.') {
 #ifdef LINE_ENABLED
+			lineUnitTest = false;
 			forcedLine = -1;
 #endif
 #ifdef STRIP_ENABLED
 			forcedStrip = -1;
+#endif
+#ifdef LINE_ENABLED
+		} else if (b == '@') {
+			lineTestStates[0] = Serial.read();
+			lineTestStates[1] = Serial.read();
+			lineTestStates[2] = Serial.read();
+			unitTest(lineTestStates[0], lineTestStates[1], lineTestStates[2]);
+			lineUnitTest = true;
 #endif
 		} else if (b == '?') {
 			usage();
@@ -277,7 +320,7 @@ void loop() {
 		handleButtons(newButtons);
 	}
 #ifdef LINE_ENABLED
-	if (!lineDisabled) {
+	if (!lineDisabled && !lineUnitTest) {
 		handleLine();
 	}
 #endif
