@@ -56,45 +56,23 @@ void displayStep() {
 	byte port = PORT & OUT_NOT, ddr = DDR & OUT_NOT; // clear bits 3, 4 & 5 => Z
 	static byte displaySubStep = 0;
 
-	//	10z -> 3
-	//	1z0 -> 2
-	//	100 -> 2+3
-
+	//	10z -> 1
+	//	z10 -> 2
+	//	1z0 -> 3
 	//	01z -> 4
-	//	z10 -> 5
-	//	010 -> 4+5
+	//	z01 -> 5
+	//	0z1 -> 6
 
-	//	0z1 -> 1
-	//	z01 -> 6
-	//	001 -> 1+6
+	//	100 -> 1+3
+	//	010 -> 2+4
+	//	001 -> 5+6
+
+	//	110 -> 2+3
+	//	011 -> 4+6
+	//	101 -> 1+5
 
 	switch(displaySubStep) {
-	case 0:
-		// A = 0;
-		ddr |= OUT_A;
-
-		// C = leds[0]>0 ? leds[0] : 'z';
-		if (leds[0] > 0) {
-			ddr |= OUT_C;
-			OCR_OUT_C = leds[0];
-		}
-
-		displaySubStep = 1;
-	break;
-	case 1:
-		// A = 1
-		port |= OUT_A;
-		ddr |= OUT_A;
-
-		// C = leds[1]>0 ? 256-leds[1] : 'z';
-		if (leds[1] > 0) {
-			ddr |= OUT_C;
-			OCR_OUT_C = ~leds[1];
-		}
-
-		displaySubStep = 2;
-	break;
-	case 2:
+	case 0: // 1 !x z
 		// A = 1;
 		port |= OUT_A;
 		ddr |= OUT_A;
@@ -104,23 +82,9 @@ void displayStep() {
 			ddr |= OUT_B;
 			OCR_OUT_B = ~leds[2];
 		}
-
-		displaySubStep = 3;
 	break;
-	case 3:
-		// A = 0;
-		ddr |= OUT_A;
-
-		// B = leds[3] ? leds[3] : 'z';
-		if (leds[3] > 0) {
-			ddr |= OUT_B;
-			OCR_OUT_B = leds[3];
-		} // else ddr already cleared
-
-		displaySubStep = 4;
-	break;
-	case 4:
-		// C = '1';
+	case 1: // z x 0
+		// C = 0;
 		ddr |= OUT_C;
 		port |= OUT_C;
 		OCR_OUT_C = 0x0;
@@ -130,10 +94,29 @@ void displayStep() {
 			ddr |= OUT_B;
 			OCR_OUT_B = leds[4];
 		}
-
-		displaySubStep = 5;
 	break;
-	case 5:
+	case 2: // 1 z !x
+		// A = 1
+		port |= OUT_A;
+		ddr |= OUT_A;
+
+		// C = leds[1]>0 ? 256-leds[1] : 'z';
+		if (leds[1] > 0) {
+			ddr |= OUT_C;
+			OCR_OUT_C = ~leds[1];
+		}
+	break;
+	case 3: // 0 x z
+		// A = 0;
+		ddr |= OUT_A;
+
+		// B = leds[3] ? leds[3] : 'z';
+		if (leds[3] > 0) {
+			ddr |= OUT_B;
+			OCR_OUT_B = leds[3];
+		} // else ddr already cleared
+	break;
+	case 4: // z 0 x
 		// B = 0;
 		ddr |= OUT_B;
 		port |= OUT_B;
@@ -144,12 +127,21 @@ void displayStep() {
 			ddr |= OUT_C;
 			OCR_OUT_C = leds[5];
 		}
+	break;
+	case 5: // 0 z x
+		// A = 0;
+		ddr |= OUT_A;
 
-		displaySubStep = 0;
+		// C = leds[0]>0 ? leds[0] : 'z';
+		if (leds[0] > 0) {
+			ddr |= OUT_C;
+			OCR_OUT_C = leds[0];
+		}
 	break;
 	}
 	PORT = port;
 	DDR  = ddr;
+	displaySubStep = (displaySubStep + 1) % 6;
 }
 
 #else // BY_6

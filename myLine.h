@@ -23,7 +23,7 @@ extern byte leds[6];
 
 // masks for DDRx and PORTx
 // DDRB = 0 for output , 1 for INPUT
-// PORTB = output
+// PORTB = output value
 // thus :
 //  DDRB=1 , PORTB=1 => +5
 //  DDRB=1 , PORTB=0 => GND
